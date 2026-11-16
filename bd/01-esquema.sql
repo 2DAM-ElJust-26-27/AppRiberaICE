@@ -201,3 +201,20 @@ CREATE INDEX idx_contacte_servei    ON contacte(servei_id);
 CREATE INDEX idx_horari_entitat     ON horari(entitat_id);
 CREATE INDEX idx_horari_centre      ON horari(centre_id);
 CREATE INDEX idx_horari_servei      ON horari(servei_id);
+
+-- ---------- Cerca sense accents ni majúscules ----------
+-- (sense extensions: no cal ser superusuari)
+CREATE OR REPLACE FUNCTION normalitza(t TEXT) RETURNS TEXT
+LANGUAGE sql IMMUTABLE PARALLEL SAFE AS $$
+    SELECT translate(lower(coalesce(t, '')),
+                     'àáâäèéêëìíîïòóôöùúûüçñ·’''',
+                     'aaaaeeeeiiiioooouuuucn.  ')
+$$;
+
+-- Codi d'origen d'un registre (el del primer paquet d'importació que el conté)
+CREATE OR REPLACE FUNCTION codi_origen(p_tipus TEXT, p_id BIGINT) RETURNS TEXT
+LANGUAGE sql STABLE AS $$
+    SELECT codi_origen FROM identitat_importacio
+     WHERE tipus_registre = p_tipus AND registre_id = p_id
+     ORDER BY font_importacio_id LIMIT 1
+$$;
