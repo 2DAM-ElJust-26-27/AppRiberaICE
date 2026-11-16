@@ -1,0 +1,43 @@
+# Connectant la Ribera · servidor
+#   docker compose up -d --build
+# PostgreSQL crea l'esquema la primera vegada (bd/*.sql).
+# L'API importa dades/sprint-1 en arrancar (càrrega idempotent) i escolta al port 8080.
+services:
+  bd:
+    image: postgres:16-alpine
+    container_name: ribera-bd
+    environment:
+      POSTGRES_DB: ribera
+      POSTGRES_USER: ribera
+      POSTGRES_PASSWORD: ribera
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./bd:/docker-entrypoint-initdb.d:ro
+      - dades-bd:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ribera -d ribera"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./api
+    container_name: ribera-api
+    depends_on:
+      bd:
+        condition: service_healthy
+    environment:
+      BD_URL: jdbc:postgresql://bd:5432/ribera
+      BD_USUARI: ribera
+      BD_CONTRASENYA: ribera
+      IMPORTAR_EN_ARRANCAR: "true"
+      DIR_DADES: /dades
+      PORT: "8080"
+    volumes:
+      - ./dades/sprint-1:/dades:ro
+    ports:
+      - "8080:8080"
+
+volumes:
+  dades-bd:
