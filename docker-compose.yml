@@ -32,10 +32,11 @@ services:
       BD_USUARI: ribera
       BD_CONTRASENYA: ribera
       IMPORTAR_EN_ARRANCAR: "true"
-      DIR_DADES: /dades
+      DIR_DADES: /dades/sprint-1
+      DIR_COMPLEMENTS: /dades/complements
       PORT: "8080"
     volumes:
-      - ./dades/sprint-1:/dades:ro
+      - ./dades:/dades:ro
     ports:
       - "8080:8080"
 

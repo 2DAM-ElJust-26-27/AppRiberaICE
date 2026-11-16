@@ -12,6 +12,7 @@ Aquest repositori conté **només la part d'usuari** (consulta): no hi ha part d
 | Client | Flutter (estat amb `ChangeNotifier`, sense Riverpod) | [`app/`](app) |
 | Servidor | Docker Compose | [`docker-compose.yml`](docker-compose.yml) |
 | Dades del Sprint 1 | XML · CSV · JSON (originals, sense modificar) | [`dades/sprint-1/`](dades/sprint-1) |
+| Dades complementàries | punts de 16 centres geocodificats amb CartoCiudad (IGN/CNIG) | [`dades/complements/`](dades/complements) |
 
 La planificació i les decisions estan a [`docs/GUIA.md`](docs/GUIA.md).
 

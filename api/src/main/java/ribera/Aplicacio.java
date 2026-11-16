@@ -29,7 +29,7 @@ public final class Aplicacio {
 
         if (cfg.importarEnArrancar()) {
             try (Connection c = ds.getConnection()) {
-                InformeImportacio inf = new Importador(c, cfg.dirDades()).importa();
+                InformeImportacio inf = new Importador(c, cfg.dirDades(), cfg.dirComplements()).importa();
                 System.out.print(inf.resum());
             }
         }

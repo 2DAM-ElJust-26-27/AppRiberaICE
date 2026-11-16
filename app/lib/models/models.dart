@@ -196,6 +196,17 @@ class CentreResum {
 
   bool get tePunt => latitud != null && longitud != null;
 
+  /// Explicació de la precisió del punt (cap és una mesura GPS verificada).
+  String? get textPrecisio => switch (precisioPunt) {
+        null => null,
+        'punt_publicat' => 'Punt publicat per la font oficial (no verificat per GPS).',
+        'portal' => 'Ubicació geocodificada a partir de l\'adreça (portal exacte).',
+        'portal_proxim' => 'Ubicació aproximada: geocodificada amb el portal veí.',
+        'carrer' => 'Ubicació aproximada: punt del carrer (adreça sense número).',
+        'toponim' => 'Ubicació geocodificada pel nom del centre.',
+        final p => 'Precisió del punt: $p.',
+      };
+
   /// Adreça llegible amb municipi, sense inventar parts que falten.
   String? get adrecaCompleta {
     final parts = [

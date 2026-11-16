@@ -47,6 +47,7 @@ public class Importador {
 
     private final Connection c;
     private final Path dir;
+    private final Path dirComplements;
     private final InformeImportacio informe = new InformeImportacio();
     private final ObjectMapper json = new ObjectMapper();
 
@@ -57,8 +58,17 @@ public class Importador {
     private final Map<String, Long> collectius = new HashMap<>();
 
     public Importador(Connection connexio, Path directoriDades) {
+        this(connexio, directoriDades, null);
+    }
+
+    /**
+     * @param directoriComplements carpeta opcional amb dades complementàries revisades
+     *        (p. ex. punts de centres geocodificats). Pot ser null o no existir.
+     */
+    public Importador(Connection connexio, Path directoriDades, Path directoriComplements) {
         this.c = connexio;
         this.dir = directoriDades;
+        this.dirComplements = directoriComplements;
     }
 
     /** Executa la importació completa en una transacció i retorna l'informe. */
@@ -79,6 +89,7 @@ public class Importador {
             importaEntitats();
             importaCentres();
             importaServeis();
+            importaPuntsComplementaris();
 
             if (!informe.correcte()) {
                 c.rollback();
@@ -368,6 +379,54 @@ public class Importador {
                             prestacioId, centreId, fontPc);
                 }
             }
+        }
+    }
+
+    // ------------------------------------------------------------------ complements
+
+    /**
+     * Punts de centres d'una font complementària documentada (dades/complements).
+     * Només omple centres sense punt: no sobreescriu el punt de la font inicial
+     * ni cap correcció feta a la BD. No modifica els fitxers del paquet.
+     */
+    private void importaPuntsComplementaris() throws Exception {
+        if (dirComplements == null) return;
+        Path punts = dirComplements.resolve("punts-centres.csv");
+        if (!Files.exists(punts)) return;
+        String fitxer = "complements/punts-centres.csv";
+
+        Path fontsComp = dirComplements.resolve("fonts.json");
+        if (Files.exists(fontsComp)) {
+            for (JsonNode f : json.readTree(fontsComp.toFile()).path("fonts")) {
+                long id = Jdbc.retornaId(c, "INSERT INTO font (codi, referencia) VALUES (?, ?) "
+                        + "ON CONFLICT (codi) DO UPDATE SET referencia = EXCLUDED.referencia RETURNING id",
+                        f.get("codi").asText(), f.get("referencia").asText());
+                fonts.put(f.get("codi").asText(), id);
+            }
+        }
+
+        int fila = 1;
+        for (Map<String, String> r : LectorCsv.llegeix(punts)) {
+            fila++;
+            String cami = "fila " + fila;
+            Long centreId = referencia("centre", r.get("codi"), fitxer, cami + ".codi");
+            Long fontId = font(r.get("font_codi"), fitxer, cami + ".font_codi");
+            BigDecimal lat, lon;
+            try {
+                lat = new BigDecimal(r.get("latitud"));
+                lon = new BigDecimal(r.get("longitud"));
+            } catch (RuntimeException e) {
+                informe.error(fitxer, cami, "latitud/longitud no vàlides");
+                continue;
+            }
+            if (lat.signum() == 0 && lon.signum() == 0) {
+                informe.error(fitxer, cami, "el punt (0,0) no és vàlid");
+                continue;
+            }
+            if (centreId == null) continue;
+            int n = Jdbc.executa(c, "UPDATE centre SET latitud = ?, longitud = ?, precisio_punt = ?, font_punt_id = ? "
+                    + "WHERE id = ? AND latitud IS NULL AND longitud IS NULL", lat, lon, r.get("precisio_punt"), fontId, centreId);
+            if (n > 0) informe.nou("punt_complementari");
         }
     }
 

@@ -35,8 +35,7 @@ class DetallCentre extends StatelessWidget {
                   Uri.parse('https://www.openstreetmap.org/?mlat=${c.latitud}&mlon=${c.longitud}#map=17/${c.latitud}/${c.longitud}'),
                 ),
               ),
-              if (c.precisioPunt == 'punt_publicat')
-                const Nota('Punt publicat per la font oficial, no és una mesura GPS verificada.'),
+              if (c.textPrecisio != null) Nota(c.textPrecisio!),
               TextFont(d.fontPunt, prefix: 'Font del punt'),
             ] else
               const Nota('Sense coordenades conegudes: no apareix al mapa.'),

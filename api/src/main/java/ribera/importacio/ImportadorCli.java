@@ -23,7 +23,7 @@ public final class ImportadorCli {
         DataSource ds = BaseDades.dataSource(cfg);
         BaseDades.esperaDisponible(ds, 15);
         try (Connection c = ds.getConnection()) {
-            InformeImportacio inf = new Importador(c, dir).importa();
+            InformeImportacio inf = new Importador(c, dir, cfg.dirComplements()).importa();
             System.out.print(inf.resum());
             if (!inf.correcte()) System.exit(1);
         }

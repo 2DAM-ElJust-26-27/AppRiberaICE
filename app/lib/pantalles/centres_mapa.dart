@@ -283,7 +283,7 @@ class _Mapa extends StatelessWidget {
               subtitle: Text([
                 if (seleccionat!.tipusCentre != null) seleccionat!.tipusCentre!.nom,
                 if (seleccionat!.adrecaCompleta != null) seleccionat!.adrecaCompleta!,
-                if (seleccionat!.precisioPunt == 'punt_publicat') 'Punt publicat per la font (no verificat per GPS)',
+                if (seleccionat!.textPrecisio != null) seleccionat!.textPrecisio!,
               ].join('\n')),
               isThreeLine: true,
               trailing: FilledButton.tonal(onPressed: () => obriCentre(context, seleccionat!.id), child: const Text('Fitxa')),

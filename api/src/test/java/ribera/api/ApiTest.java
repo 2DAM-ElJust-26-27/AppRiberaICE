@@ -43,7 +43,7 @@ class ApiTest {
         try (Connection c = ds.getConnection(); Statement st = c.createStatement()) {
             st.execute("DROP SCHEMA public CASCADE; CREATE SCHEMA public;");
             st.execute(Files.readString(Path.of("../bd/01-esquema.sql")));
-            assertTrue(new Importador(c, Path.of("../dades/sprint-1")).importa().correcte());
+            assertTrue(new Importador(c, Path.of("../dades/sprint-1"), Path.of("../dades/complements")).importa().correcte());
         }
         app = Aplicacio.crea(ds).start(0);
         base = "http://localhost:" + app.port() + "/api/";
@@ -96,8 +96,8 @@ class ApiTest {
         assertEquals(List.of("CEN01", "CEN04", "CEN08", "CEN09", "CEN13"),
                 codis(json("centres?tipus_centre=TC04&municipi=" + idMunicipi("Sueca"))));
         JsonNode mapa = json("centres?amb_punt=true");
-        assertEquals(List.of("CEN05"), codis(mapa), "Només CEN05 té punt publicat");
-        assertEquals(39.1615, mapa.get(0).get("latitud").asDouble(), 1e-6);
+        assertEquals(17, mapa.size(), "CEN05 (font inicial) + 16 punts complementaris");
+        assertEquals(List.of("CEN05", "CEN17"), codis(json("centres?amb_punt=true&municipi=" + idMunicipi("Cullera"))));
     }
 
     @Test
@@ -108,7 +108,8 @@ class ApiTest {
 
     @Test
     void detallsIErrors() throws Exception {
-        long idCen05 = json("centres?amb_punt=true").get(0).get("id").asLong();
+        long idCen05 = -1;
+        for (JsonNode x : json("centres?municipi=" + idMunicipi("Cullera"))) if (x.get("codi").asText().equals("CEN05")) idCen05 = x.get("id").asLong();
         JsonNode centre = json("centres/" + idCen05);
         assertEquals("CEAM de Cullera", centre.get("nom").asText());
         assertEquals(List.of("SER12"), codis(centre.get("serveis")));

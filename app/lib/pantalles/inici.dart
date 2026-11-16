@@ -84,7 +84,7 @@ class PantallaInici extends StatelessWidget {
             'Les dades són un conjunt inicial docent procedent de recull i de fonts identificades: no és un cens exhaustiu '
             'ni un directori oficial. Les adreces, els col·lectius i els horaris requereixen revisió i no garanteixen admissió.\n\n'
             'L\'assistent «Carlos Collado» no és una intel·ligència artificial: fa preguntes guiades sobre les dades del directori.\n\n'
-            'Cartografia: © col·laboradors d\'OpenStreetMap.'),
+            'Cartografia: © col·laboradors d\'OpenStreetMap. Ubicacions: CartoCiudad (IGN/CNIG), geocodificades a partir de les adreces.'),
       ],
     );
   }

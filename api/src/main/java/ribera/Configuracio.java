@@ -4,7 +4,7 @@ import java.nio.file.Path;
 
 /** Configuració llegida de variables d'entorn (amb valors per defecte per a desenvolupament local). */
 public record Configuracio(String bdUrl, String bdUsuari, String bdContrasenya, int port,
-                           boolean importarEnArrancar, Path dirDades) {
+                           boolean importarEnArrancar, Path dirDades, Path dirComplements) {
 
     public static Configuracio desDeEntorn() {
         return new Configuracio(
@@ -13,7 +13,8 @@ public record Configuracio(String bdUrl, String bdUsuari, String bdContrasenya, 
                 env("BD_CONTRASENYA", "ribera"),
                 Integer.parseInt(env("PORT", "8080")),
                 Boolean.parseBoolean(env("IMPORTAR_EN_ARRANCAR", "false")),
-                Path.of(env("DIR_DADES", "../dades/sprint-1")));
+                Path.of(env("DIR_DADES", "../dades/sprint-1")),
+                Path.of(env("DIR_COMPLEMENTS", "../dades/complements")));
     }
 
     private static String env(String nom, String perDefecte) {
