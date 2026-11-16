@@ -1,0 +1,31 @@
+# Java / Maven
+api/target/
+*.class
+*.jar
+!api/.mvn/wrapper/*.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Flutter / Dart
+app/.dart_tool/
+app/build/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+app/.pub-cache/
+app/.pub/
+app/**/GeneratedPluginRegistrant.*
+app/android/.gradle/
+app/android/local.properties
+app/ios/Pods/
+app/ios/Flutter/Generated.xcconfig
+app/ios/Flutter/flutter_export_environment.sh
+
+# Entorn
+.env
