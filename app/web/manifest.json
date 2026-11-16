@@ -1,0 +1,12 @@
+{
+  "name": "Connectant la Ribera",
+  "short_name": "Ribera",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#2E7D5B",
+  "description": "Directori de serveis socials i comunitaris de la Ribera.",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "icons": []
+}
