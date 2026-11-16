@@ -17,7 +17,7 @@ class DetallEntitat extends StatelessWidget {
   Widget build(BuildContext context) {
     return FitxaFutura<EntitatDetall>(
       titol: 'Entitat',
-      carrega: () => context.directori.api.entitat(id),
+      carrega: () => context.api.entitat(id),
       construeix: (context, e) {
         final adreca = [
           if (e.adreca != null) e.adreca!,

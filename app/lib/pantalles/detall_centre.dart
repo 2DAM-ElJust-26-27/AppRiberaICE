@@ -17,7 +17,7 @@ class DetallCentre extends StatelessWidget {
   Widget build(BuildContext context) {
     return FitxaFutura<CentreDetall>(
       titol: 'Centre',
-      carrega: () => context.directori.api.centre(id),
+      carrega: () => context.api.centre(id),
       construeix: (context, d) {
         final c = d.resum;
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

@@ -17,7 +17,7 @@ class DetallServei extends StatelessWidget {
   Widget build(BuildContext context) {
     return FitxaFutura<ServeiDetall>(
       titol: 'Servei',
-      carrega: () => context.directori.api.servei(id),
+      carrega: () => context.api.servei(id),
       construeix: (context, s) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         CapcaleraFitxa(icona: Icons.volunteer_activism_outlined, titol: s.nom, subtitol: s.descripcio),
         if (s.collectius.isNotEmpty)

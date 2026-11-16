@@ -20,23 +20,26 @@ class Filtres {
   final int? municipiId;
   final String? collectiu; // codi (COL_…)
   final String? tipusCentre; // codi (TC…)
+  final int? serveiId; // només per a centres: on es presta aquest servei
 
-  const Filtres({this.text = '', this.municipiId, this.collectiu, this.tipusCentre});
+  const Filtres({this.text = '', this.municipiId, this.collectiu, this.tipusCentre, this.serveiId});
 
-  bool get actius => municipiId != null || collectiu != null || tipusCentre != null;
-  int get nombreActius => [municipiId, collectiu, tipusCentre].where((e) => e != null).length;
+  bool get actius => municipiId != null || collectiu != null || tipusCentre != null || serveiId != null;
+  int get nombreActius => [municipiId, collectiu, tipusCentre, serveiId].where((e) => e != null).length;
 
   Filtres copyWith({
     String? text,
     int? Function()? municipiId,
     String? Function()? collectiu,
     String? Function()? tipusCentre,
+    int? Function()? serveiId,
   }) =>
       Filtres(
         text: text ?? this.text,
         municipiId: municipiId != null ? municipiId() : this.municipiId,
         collectiu: collectiu != null ? collectiu() : this.collectiu,
         tipusCentre: tipusCentre != null ? tipusCentre() : this.tipusCentre,
+        serveiId: serveiId != null ? serveiId() : this.serveiId,
       );
 
   Map<String, String> get parametres => {
@@ -44,6 +47,7 @@ class Filtres {
         if (municipiId != null) 'municipi': '$municipiId',
         if (collectiu != null) 'collectiu': collectiu!,
         if (tipusCentre != null) 'tipus_centre': tipusCentre!,
+        if (serveiId != null) 'servei': '$serveiId',
       };
 }
 
@@ -94,8 +98,11 @@ class ApiRibera {
 
   Future<Catalegs> catalegs() async => Catalegs.fromJson(_objecte(await _get('catalegs')));
 
+  /// Serveis (el filtre de servei no s'aplica a aquesta consulta).
   Future<List<ServeiResum>> serveis(Filtres f) async =>
-      _llista(await _get('serveis', f.parametres), ServeiResum.fromJson);
+      _llista(await _get('serveis', f.copyWith(serveiId: () => null).parametres), ServeiResum.fromJson);
+
+  Future<List<EntitatResum>> entitats() async => _llista(await _get('entitats'), EntitatResum.fromJson);
 
   Future<List<CentreResum>> centres(Filtres f, {bool nomesAmbPunt = false}) async => _llista(
         await _get('centres', {...f.parametres, if (nomesAmbPunt) 'amb_punt': 'true'}),

@@ -124,6 +124,7 @@ class ServeiResum {
   final List<Ref> collectius;
   final List<Ref> entitats;
   final List<Ref> municipis;
+  final List<Ref> tipusCentre;
 
   const ServeiResum({
     required this.id,
@@ -133,6 +134,7 @@ class ServeiResum {
     this.collectius = const [],
     this.entitats = const [],
     this.municipis = const [],
+    this.tipusCentre = const [],
   });
 
   factory ServeiResum.fromJson(Json j) => ServeiResum(
@@ -143,6 +145,27 @@ class ServeiResum {
         collectius: _llista(j['collectius'], Ref.fromJson),
         entitats: _llista(j['entitats'], Ref.fromJson),
         municipis: _llista(j['municipis'], Ref.fromJson),
+        tipusCentre: _llista(j['tipus_centre'], Ref.fromJson),
+      );
+}
+
+class EntitatResum {
+  final int id;
+  final String? codi;
+  final String nom;
+  final Ref? formaJuridica;
+  final String? sector;
+  final Ref? municipi;
+
+  const EntitatResum({required this.id, this.codi, required this.nom, this.formaJuridica, this.sector, this.municipi});
+
+  factory EntitatResum.fromJson(Json j) => EntitatResum(
+        id: (j['id'] as num).toInt(),
+        codi: j['codi'] as String?,
+        nom: j['nom'] as String,
+        formaJuridica: _ref(j['forma_juridica']),
+        sector: j['sector'] as String?,
+        municipi: _ref(j['municipi']),
       );
 }
 

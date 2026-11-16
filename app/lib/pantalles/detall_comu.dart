@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../estat/directori_estat.dart';
+import '../dades/api_ribera.dart';
+import '../estat/estat_app.dart';
 import '../widgets/comuns.dart';
 
 /// Carrega una fitxa (Future) i mostra càrrega, error o el contingut.
@@ -79,5 +80,5 @@ class CapcaleraFitxa extends StatelessWidget {
 
 /// Accés a l'API des de les fitxes.
 extension ApiContext on BuildContext {
-  DirectoriEstat get directori => EstatDirectori.llig(this);
+  ApiRibera get api => EstatApp.of(this).directori.api;
 }

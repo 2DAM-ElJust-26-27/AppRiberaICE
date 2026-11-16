@@ -40,6 +40,15 @@ Per esborrar la base de dades i començar de zero: `docker compose down -v`.
 
 ### 2. App Flutter
 
+Tres pestanyes:
+
+- **Serveis**: l'assistent guiat «Carlos Collado» pregunta per a qui és l'ajuda, en quin municipi i quin tipus de
+  lloc, i proposa els serveis que encaixen (només ofereix opcions amb resultats; també accepta text lliure).
+- **Centres**: mapa amb filtres de serveis (col·lectiu, municipi, tipus de centre, servei concret); mostra els
+  centres on es presten. Els que no tenen coordenades apareixen a la llista sota el mapa.
+- **Entitats**: llista d'entitats amb filtre per forma jurídica.
+
+
 ```bash
 cd app
 flutter pub get
@@ -68,7 +77,7 @@ flutter create . --platforms=android
 | `GET /api/catalegs` | col·lectius, tipus de centre, formes jurídiques, comarques |
 | `GET /api/serveis?q=&municipi=&collectiu=&tipus_centre=` | cerca de serveis |
 | `GET /api/serveis/{id}` | fitxa: col·lectius, contactes, horaris, prestacions i centres |
-| `GET /api/centres?q=&municipi=&collectiu=&tipus_centre=&amb_punt=true` | centres (amb `amb_punt` només els que tenen coordenades, per al mapa) |
+| `GET /api/centres?q=&municipi=&collectiu=&tipus_centre=&servei=&amb_punt=true` | centres (`servei`: on es presta aquest servei; `amb_punt`: només amb coordenades) |
 | `GET /api/centres/{id}` | fitxa: titular, gestor, contactes, horaris, serveis |
 | `GET /api/entitats?q=` · `GET /api/entitats/{id}` | entitats i la seua fitxa |
 
