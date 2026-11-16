@@ -16,7 +16,7 @@ import java.util.Optional;
  *   GET /api/catalegs
  *   GET /api/serveis?q=&municipi={id}&collectiu={codi}&tipus_centre={codi}
  *   GET /api/serveis/{id}
- *   GET /api/centres?q=&municipi={id}&collectiu={codi}&tipus_centre={codi}&amb_punt=true
+ *   GET /api/centres?q=&municipi={id}&collectiu={codi}&tipus_centre={codi}&servei={id}&amb_punt=true
  *   GET /api/centres/{id}
  *   GET /api/entitats?q=
  *   GET /api/entitats/{id}
@@ -69,15 +69,19 @@ public final class Rutes {
     }
 
     private static Directori.Filtres filtres(Context ctx) {
-        Long municipi = null;
-        String m = buit(ctx.queryParam("municipi"));
-        if (m != null) {
-            try { municipi = Long.parseLong(m); } catch (NumberFormatException e) {
-                throw new ParametreInvalid("El paràmetre municipi ha de ser l'id numèric del municipi");
-            }
-        }
+        Long municipi = enter(ctx, "municipi");
         return new Directori.Filtres(buit(ctx.queryParam("q")), municipi, buit(ctx.queryParam("collectiu")),
-                buit(ctx.queryParam("tipus_centre")), "true".equalsIgnoreCase(ctx.queryParam("amb_punt")));
+                buit(ctx.queryParam("tipus_centre")), enter(ctx, "servei"), "true".equalsIgnoreCase(ctx.queryParam("amb_punt")));
+    }
+
+    private static Long enter(Context ctx, String nom) {
+        String v = buit(ctx.queryParam(nom));
+        if (v == null) return null;
+        try {
+            return Long.parseLong(v);
+        } catch (NumberFormatException e) {
+            throw new ParametreInvalid("El paràmetre " + nom + " ha de ser un id numèric");
+        }
     }
 
     private static String buit(String s) {

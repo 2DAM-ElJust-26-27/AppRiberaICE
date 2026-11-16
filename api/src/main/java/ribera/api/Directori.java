@@ -28,8 +28,8 @@ public class Directori {
     }
 
     /** Filtres opcionals i combinables per a serveis i centres. */
-    public record Filtres(String q, Long municipiId, String collectiu, String tipusCentre, boolean nomesAmbPunt) {
-        public static Filtres buits() { return new Filtres(null, null, null, null, false); }
+    public record Filtres(String q, Long municipiId, String collectiu, String tipusCentre, Long serveiId, boolean nomesAmbPunt) {
+        public static Filtres buits() { return new Filtres(null, null, null, null, null, false); }
     }
 
     // ================================================================= catàlegs i territori
@@ -70,13 +70,18 @@ public class Directori {
                    (SELECT coalesce(json_agg(DISTINCT jsonb_build_object('id', m.id, 'codi', codi_origen('municipi', m.id), 'nom', m.nom)), '[]')
                       FROM prestacio p JOIN prestacio_centre pc ON pc.prestacio_id = p.id
                       JOIN centre ce ON ce.id = pc.centre_id JOIN municipi m ON m.id = ce.municipi_id
-                     WHERE p.servei_id = s.id) AS municipis
+                     WHERE p.servei_id = s.id) AS municipis,
+                   (SELECT coalesce(json_agg(DISTINCT jsonb_build_object('id', tc.id, 'codi', tc.codi, 'nom', tc.nom)), '[]')
+                      FROM prestacio p JOIN prestacio_centre pc ON pc.prestacio_id = p.id
+                      JOIN centre ce ON ce.id = pc.centre_id JOIN tipus_centre tc ON tc.id = ce.tipus_centre_id
+                     WHERE p.servei_id = s.id) AS tipus_centre
               FROM servei s
             """;
 
     private ServeiResum serveiResum(ResultSet rs) throws SQLException {
         return new ServeiResum(rs.getLong("id"), rs.getString("codi"), rs.getString("nom"), rs.getString("descripcio"),
-                refs(rs.getString("collectius")), refs(rs.getString("entitats")), refs(rs.getString("municipis")));
+                refs(rs.getString("collectius")), refs(rs.getString("entitats")), refs(rs.getString("municipis")),
+                refs(rs.getString("tipus_centre")));
     }
 
     /**
@@ -189,6 +194,11 @@ public class Directori {
                     + "JOIN servei_collectiu sc ON sc.servei_id = pr.servei_id JOIN collectiu co ON co.id = sc.collectiu_id "
                     + "WHERE pc.centre_id = c.id AND co.codi = ?)");
             p.add(f.collectiu());
+        }
+        if (f.serveiId() != null) {
+            sql.append(" AND EXISTS (SELECT 1 FROM prestacio_centre pc JOIN prestacio pr ON pr.id = pc.prestacio_id "
+                    + "WHERE pc.centre_id = c.id AND pr.servei_id = ?)");
+            p.add(f.serveiId());
         }
         if (f.nomesAmbPunt()) sql.append(" AND c.latitud IS NOT NULL AND c.longitud IS NOT NULL");
         sql.append(" ORDER BY normalitza(c.nom)");

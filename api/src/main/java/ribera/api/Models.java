@@ -28,7 +28,7 @@ public final class Models {
                          List<Franja> franges) {}
 
     public record ServeiResum(long id, String codi, String nom, String descripcio,
-                              List<Ref> collectius, List<Ref> entitats, List<Ref> municipis) {}
+                              List<Ref> collectius, List<Ref> entitats, List<Ref> municipis, List<Ref> tipusCentre) {}
 
     public record CentreResum(long id, String codi, String nom, Ref tipusCentre, Ref municipi, String adreca,
                               String codiPostal, Double latitud, Double longitud, String precisioPunt) {}

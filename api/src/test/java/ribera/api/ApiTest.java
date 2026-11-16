@@ -117,8 +117,17 @@ class ApiTest {
         JsonNode servei = json("serveis/" + idServei);
         assertEquals("ENT02", servei.get("prestacions").get(0).get("entitat").get("codi").asText());
 
+        assertEquals(List.of("CEN05"), codis(json("centres?servei=" + idServei)), "Centres on es presta el servei");
+        assertTrue(servei.has("collectius"));
+        JsonNode resum = json("serveis?collectiu=COL_MAJORS");
+        boolean ambTipus = false;
+        for (JsonNode x : resum) if (x.get("codi").asText().equals("SER12"))
+            ambTipus = x.get("tipus_centre").get(0).get("codi").asText().equals("TC06");
+        assertTrue(ambTipus, "El resum de SER12 inclou el tipus del centre on es presta");
+
         assertEquals(404, get("centres/999999").statusCode());
         assertEquals(400, get("centres/abc").statusCode());
         assertEquals(400, get("serveis?municipi=abc").statusCode());
+        assertEquals(400, get("centres?servei=abc").statusCode());
     }
 }
