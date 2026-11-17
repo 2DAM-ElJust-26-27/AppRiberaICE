@@ -74,7 +74,7 @@ class _PantallaCentresState extends State<PantallaCentres> {
     }
   }
 
-  /// Llista plegada o desplegada. Per defecte: oberta en pantalla ampla, plegada en vertical.
+  /// Llista plegada o desplegada (per defecte plegada).
   bool? _llistaOberta;
 
   void _commutaLlista() => setState(() => _llistaOberta = !(_llistaOberta ?? false));
@@ -83,8 +83,7 @@ class _PantallaCentresState extends State<PantallaCentres> {
   Widget build(BuildContext context) {
     final e = EstatApp.of(context).centres;
     final mida = MediaQuery.sizeOf(context);
-    final ample = mida.width >= 840;
-    final oberta = _llistaOberta ?? ample;
+    final oberta = _llistaOberta ?? false;
 
     return ListenableBuilder(
       listenable: e,
@@ -104,38 +103,8 @@ class _PantallaCentresState extends State<PantallaCentres> {
         final Widget cos;
         if (e.estat == EstatCarrega.error) {
           cos = MissatgeEstat.error(e.error ?? '', e.carrega);
-        } else if (ample) {
-          // Pantalla ampla: mapa + panell lateral plegable.
-          cos = Row(children: [
-            Expanded(
-              child: Stack(children: [
-                Positioned.fill(child: mapa),
-                if (!oberta)
-                  Positioned(
-                    top: 12,
-                    right: 12,
-                    child: FloatingActionButton.extended(
-                      heroTag: 'llista-centres',
-                      onPressed: _commutaLlista,
-                      icon: const Icon(Icons.list),
-                      label: Text('Llista (${e.centres.length})'),
-                    ),
-                  ),
-              ]),
-            ),
-            if (oberta) ...[
-              const VerticalDivider(width: 1),
-              SizedBox(
-                width: 380,
-                child: CustomScrollView(slivers: [
-                  _CapcaleraLlista(estat: e, oberta: true, onCommuta: _commutaLlista),
-                  ..._llistaSlivers(context, e),
-                ]),
-              ),
-            ],
-          ]);
         } else {
-          // Vertical: tota la pantalla fa scroll; el mapa es veu sencer i la llista es plega a sota.
+          // En qualsevol mida: tota la pantalla fa scroll; el mapa es veu sencer i la llista es plega a sota.
           final alcadaMapa = (mida.height * 0.62).clamp(300.0, 700.0);
           cos = CustomScrollView(controller: _scroll, slivers: [
             SliverToBoxAdapter(child: SizedBox(height: alcadaMapa, child: mapa)),
