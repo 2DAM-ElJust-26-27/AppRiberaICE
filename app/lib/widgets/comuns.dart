@@ -2,6 +2,28 @@ import 'package:flutter/material.dart';
 
 import '../models/models.dart';
 
+/// Marc amb marge, vora i cantons arrodonits per al contingut principal d'una pestanya.
+class Marc extends StatelessWidget {
+  final Widget child;
+  final EdgeInsets marge;
+
+  const Marc({super.key, required this.child, this.marge = const EdgeInsets.fromLTRB(24, 4, 24, 24)});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    const radi = BorderRadius.all(Radius.circular(16));
+    return Padding(
+      padding: marge,
+      child: DecoratedBox(
+        position: DecorationPosition.foreground, // la vora es dibuixa damunt del contingut
+        decoration: BoxDecoration(borderRadius: radi, border: Border.all(color: c.outlineVariant, width: 1.5)),
+        child: ClipRRect(borderRadius: radi, child: child),
+      ),
+    );
+  }
+}
+
 /// Indicador de càrrega centrat.
 class Carregant extends StatelessWidget {
   const Carregant({super.key});

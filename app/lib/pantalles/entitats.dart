@@ -59,8 +59,8 @@ class _PantallaEntitatsState extends State<PantallaEntitats> {
         final ordenades = formes.values.toList()..sort((a, b) => a.nom.compareTo(b.nom));
         final llista = _forma == null ? _entitats : _entitats.where((e) => e.formaJuridica?.codi == _forma).toList();
 
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
+        return Marc(
+          marge: const EdgeInsets.fromLTRB(24, 16, 24, 24),
           child: Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
