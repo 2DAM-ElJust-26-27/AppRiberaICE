@@ -6,7 +6,7 @@ import '../models/models.dart';
 enum Autor { assistent, usuari }
 
 /// Accions especials que pot triar l'usuari a més de respondre una pregunta.
-enum Accio { resposta, reinicia, veureMapa, llevaMunicipi, mostraTot }
+enum Accio { resposta, reinicia, veureMapa, llevaMunicipi }
 
 /// Opció de resposta ràpida (botó) d'un missatge de l'assistent.
 class Opcio {
@@ -89,9 +89,6 @@ class AssistentEstat {
         return;
       case Accio.llevaMunicipi:
         filtres = filtres.copyWith(municipiId: () => null);
-        await _mostraResultats(await _busca());
-        return;
-      case Accio.mostraTot:
         await _mostraResultats(await _busca());
         return;
       case Accio.resposta:

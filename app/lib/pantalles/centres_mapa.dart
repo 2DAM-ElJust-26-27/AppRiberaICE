@@ -7,7 +7,7 @@ import '../models/models.dart';
 import '../widgets/comuns.dart';
 import '../widgets/contactes.dart';
 import '../widgets/filtres_centres.dart';
-import '../widgets/targetes.dart';
+import '../navegacio.dart';
 
 /// Pestanya Centres: mapa amb filtres de serveis i llista dels centres on es presten.
 /// Els centres sense coordenades no es dibuixen (mai a (0,0)); apareixen a la llista.
@@ -77,8 +77,8 @@ class _PantallaCentresState extends State<PantallaCentres> {
       _error = null;
     });
     try {
-      final centres = await apiRibera.centres(_filtres);
-      final serveis = await apiRibera.serveis(_filtres);
+      // Les dues peticions van alhora (no una darrere l'altra).
+      final (centres, serveis) = await (apiRibera.centres(_filtres), apiRibera.serveis(_filtres)).wait;
       if (num != _peticio || !mounted) return;
       setState(() {
         _centres = centres;

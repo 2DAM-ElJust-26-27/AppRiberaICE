@@ -4,9 +4,8 @@ import '../dades/api_ribera.dart';
 import '../models/models.dart';
 import '../widgets/comuns.dart';
 import '../widgets/contactes.dart';
-import 'detall_centre.dart';
+import '../navegacio.dart';
 import 'detall_comu.dart';
-import 'detall_servei.dart';
 
 /// Fitxa d'una entitat: dades, contactes, serveis que presta i centres que titula o gestiona.
 class DetallEntitat extends StatelessWidget {
@@ -37,15 +36,15 @@ class DetallEntitat extends StatelessWidget {
           Seccio(titol: 'Serveis que presta', icona: Icons.volunteer_activism_outlined, fills: [
             if (e.serveisPrestats.isEmpty) const Nota('No consta cap servei prestat per aquesta entitat.'),
             for (final s in e.serveisPrestats)
-              _Enllac(s.nom, Icons.volunteer_activism_outlined, () => DetallServei(id: s.id)),
+              _Enllac(s.nom, Icons.volunteer_activism_outlined, () => obriServei(context, s.id)),
           ]),
           if (e.centresTitulats.isNotEmpty)
             Seccio(titol: 'Centres dels quals és titular', icona: Icons.home_work_outlined, fills: [
-              for (final c in e.centresTitulats) _Enllac(c.nom, Icons.home_work_outlined, () => DetallCentre(id: c.id), c.adrecaCompleta),
+              for (final c in e.centresTitulats) _Enllac(c.nom, Icons.home_work_outlined, () => obriCentre(context, c.id), c.adrecaCompleta),
             ]),
           if (e.centresGestionats.isNotEmpty)
             Seccio(titol: 'Centres que gestiona', icona: Icons.home_work_outlined, fills: [
-              for (final c in e.centresGestionats) _Enllac(c.nom, Icons.home_work_outlined, () => DetallCentre(id: c.id), c.adrecaCompleta),
+              for (final c in e.centresGestionats) _Enllac(c.nom, Icons.home_work_outlined, () => obriCentre(context, c.id), c.adrecaCompleta),
             ]),
           if (e.font != null) Seccio(titol: 'Procedència', icona: Icons.source_outlined, fills: [TextFont(e.font)]),
         ]);
@@ -58,9 +57,9 @@ class _Enllac extends StatelessWidget {
   final String titol;
   final String? subtitol;
   final IconData icona;
-  final Widget Function() desti;
+  final VoidCallback onTap;
 
-  const _Enllac(this.titol, this.icona, this.desti, [this.subtitol]);
+  const _Enllac(this.titol, this.icona, this.onTap, [this.subtitol]);
 
   @override
   Widget build(BuildContext context) => Card(
@@ -70,7 +69,7 @@ class _Enllac extends StatelessWidget {
           title: Text(titol),
           subtitle: subtitol == null ? null : Text(subtitol!),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => desti())),
+          onTap: onTap,
         ),
       );
 }

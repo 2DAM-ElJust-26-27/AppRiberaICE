@@ -104,10 +104,7 @@ class ApiRibera {
 
   Future<List<EntitatResum>> entitats() async => _llista(await _get('entitats'), EntitatResum.fromJson);
 
-  Future<List<CentreResum>> centres(Filtres f, {bool nomesAmbPunt = false}) async => _llista(
-        await _get('centres', {...f.parametres, if (nomesAmbPunt) 'amb_punt': 'true'}),
-        CentreResum.fromJson,
-      );
+  Future<List<CentreResum>> centres(Filtres f) async => _llista(await _get('centres', f.parametres), CentreResum.fromJson);
 
   Future<ServeiDetall> servei(int id) async => ServeiDetall.fromJson(_objecte(await _get('serveis/$id')));
 

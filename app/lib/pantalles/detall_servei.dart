@@ -4,9 +4,8 @@ import '../dades/api_ribera.dart';
 import '../models/models.dart';
 import '../widgets/comuns.dart';
 import '../widgets/contactes.dart';
-import 'detall_centre.dart';
+import '../navegacio.dart';
 import 'detall_comu.dart';
-import 'detall_entitat.dart';
 
 /// Fitxa d'un servei: col·lectius, contactes, horaris i qui el presta i on.
 class DetallServei extends StatelessWidget {
@@ -62,7 +61,7 @@ class _Prestacio extends StatelessWidget {
           trailing: const Icon(Icons.chevron_right),
           onTap: p.entitat.id == null
               ? null
-              : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DetallEntitat(id: p.entitat.id!))),
+              : () => obriEntitat(context, p.entitat.id!),
         ),
         if (p.centres.isEmpty)
           Padding(
@@ -77,7 +76,7 @@ class _Prestacio extends StatelessWidget {
             title: Text(c.nom),
             subtitle: c.adrecaCompleta == null ? null : Text(c.adrecaCompleta!),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DetallCentre(id: c.id))),
+            onTap: () => obriCentre(context, c.id),
           ),
       ]),
     );

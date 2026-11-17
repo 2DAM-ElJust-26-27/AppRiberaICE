@@ -28,9 +28,7 @@ public class Directori {
     }
 
     /** Filtres opcionals i combinables per a serveis i centres. */
-    public record Filtres(String q, Long municipiId, String collectiu, String tipusCentre, Long serveiId, boolean nomesAmbPunt) {
-        public static Filtres buits() { return new Filtres(null, null, null, null, null, false); }
-    }
+    public record Filtres(String q, Long municipiId, String collectiu, String tipusCentre, Long serveiId, boolean nomesAmbPunt) {}
 
     // ================================================================= catàlegs i territori
 

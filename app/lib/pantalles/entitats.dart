@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../dades/api_ribera.dart';
 import '../models/models.dart';
 import '../widgets/comuns.dart';
-import 'detall_entitat.dart';
+import '../navegacio.dart';
 
 /// Pestanya Entitats: organitzacions que presten serveis o són titulars/gestores de centres.
 class PantallaEntitats extends StatefulWidget {
@@ -116,7 +116,7 @@ class _TargetaEntitat extends StatelessWidget {
         title: Text(e.nom),
         subtitle: detalls.isEmpty ? null : Text(detalls),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DetallEntitat(id: e.id))),
+        onTap: () => obriEntitat(context, e.id),
       ),
     );
   }
