@@ -49,6 +49,9 @@ class _PantallaCentresState extends State<PantallaCentres> {
   String? _error;
   int _peticio = 0; // per ignorar respostes velles si l'usuari canvia de filtre ràpid
 
+  /// En pantalla gran, la llista és un panell flotant a la dreta del mapa.
+  bool _panellObert = false;
+
   List<CentreResum> get _ambPunt => _centres.where((c) => c.tePunt).toList();
 
   @override
@@ -137,6 +140,7 @@ class _PantallaCentresState extends State<PantallaCentres> {
 
   @override
   Widget build(BuildContext context) {
+    final ample = MediaQuery.sizeOf(context).width >= 840;
     final mapa = _Mapa(
       controlador: _mapa,
       punts: _ambPunt,
@@ -147,22 +151,26 @@ class _PantallaCentresState extends State<PantallaCentres> {
       },
       onTriaPunt: (c) => setState(() => _seleccionat = c),
       onTocaMapa: () => setState(() => _seleccionat = null),
+      margeDret: ample && _panellObert ? 404 : 16,
     );
 
     final Widget cos = _estat == EstatCarrega.error
         ? MissatgeEstat.error(_error ?? '', _carrega)
         : Stack(children: [
             Positioned.fill(child: mapa),
-            Positioned(
-              right: 16,
-              bottom: 48,
-              child: FloatingActionButton.extended(
-                heroTag: 'llista-centres',
-                onPressed: _mostraLlista,
-                icon: const Icon(Icons.list),
-                label: Text('Llista (${_centres.length})'),
+            if (ample && _panellObert)
+              Positioned(top: 12, right: 12, bottom: 36, width: 380, child: _panellLlista())
+            else
+              Positioned(
+                right: 16,
+                bottom: 48,
+                child: FloatingActionButton.extended(
+                  heroTag: 'llista-centres',
+                  onPressed: ample ? () => setState(() => _panellObert = true) : _mostraLlista,
+                  icon: const Icon(Icons.list),
+                  label: Text('Llista (${_centres.length})'),
+                ),
               ),
-            ),
           ]);
 
     return Column(children: [
@@ -203,7 +211,34 @@ class _PantallaCentresState extends State<PantallaCentres> {
     return codi;
   }
 
-  /// Obri la llista de centres en un full inferior que es pot arrossegar i tancar.
+  /// Pantalla gran: panell flotant a la dreta del mapa (no l'enfosqueix).
+  Widget _panellLlista() {
+    return Card(
+      elevation: 6,
+      clipBehavior: Clip.antiAlias,
+      child: CustomScrollView(slivers: [
+        SliverToBoxAdapter(
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: _CapcaleraLlista(centres: _centres, carregant: _estat == EstatCarrega.carregant),
+              ),
+            ),
+            IconButton(
+              tooltip: 'Tanca la llista',
+              icon: const Icon(Icons.close),
+              onPressed: () => setState(() => _panellObert = false),
+            ),
+          ]),
+        ),
+        ..._llistaSlivers(context, enFull: false),
+        const SliverToBoxAdapter(child: SizedBox(height: 12)),
+      ]),
+    );
+  }
+
+  /// Mòbil: llista en un full inferior que es pot arrossegar i tancar.
   void _mostraLlista() {
     showModalBottomSheet<void>(
       context: context,
@@ -216,15 +251,16 @@ class _PantallaCentresState extends State<PantallaCentres> {
         minChildSize: 0.3,
         maxChildSize: 0.95,
         builder: (_, scroll) => CustomScrollView(controller: scroll, slivers: [
-          _CapcaleraLlista(centres: _centres, carregant: _estat == EstatCarrega.carregant),
-          ..._llistaSlivers(fullContext),
+          SliverToBoxAdapter(child: _CapcaleraLlista(centres: _centres, carregant: _estat == EstatCarrega.carregant)),
+          ..._llistaSlivers(fullContext, enFull: true),
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
         ]),
       ),
     );
   }
 
-  List<Widget> _llistaSlivers(BuildContext context) {
+  /// Files de la llista. [enFull] indica si està dins del full inferior (cal tancar-lo en triar).
+  List<Widget> _llistaSlivers(BuildContext context, {required bool enFull}) {
     final t = Theme.of(context);
     final centres = _centres;
     if (_estat != EstatCarrega.llest && centres.isEmpty) {
@@ -241,7 +277,7 @@ class _PantallaCentresState extends State<PantallaCentres> {
               if (_filtres.actius)
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pop();
+                    if (enFull) Navigator.of(context).pop();
                     _neteja();
                   },
                   child: const Text('Neteja els filtres'),
@@ -266,12 +302,12 @@ class _PantallaCentresState extends State<PantallaCentres> {
               tooltip: 'Obri la fitxa',
               icon: const Icon(Icons.chevron_right),
               onPressed: () {
-                Navigator.of(context).pop();
+                if (enFull) Navigator.of(context).pop();
                 obriCentre(this.context, c.id);
               },
             ),
             onTap: () {
-              Navigator.of(context).pop(); // tanca la llista i mostra el centre al mapa
+              if (enFull) Navigator.of(context).pop(); // tanca el full i mostra el centre al mapa
               _selecciona(c);
             },
           );
@@ -293,8 +329,7 @@ class _CapcaleraLlista extends StatelessWidget {
     final t = Theme.of(context);
     final ambPunt = centres.where((c) => c.tePunt).length;
     final buit = carregant && centres.isEmpty;
-    return SliverToBoxAdapter(
-      child: Padding(
+    return Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(buit ? 'Carregant centres…' : '${centres.length} ${centres.length == 1 ? 'centre' : 'centres'}',
@@ -305,7 +340,6 @@ class _CapcaleraLlista extends StatelessWidget {
               style: t.textTheme.bodySmall?.copyWith(color: t.colorScheme.onSurfaceVariant),
             ),
         ]),
-      ),
     );
   }
 }
@@ -401,6 +435,7 @@ class _Mapa extends StatelessWidget {
   final VoidCallback onPreparat;
   final ValueChanged<CentreResum> onTriaPunt;
   final VoidCallback onTocaMapa;
+  final double margeDret;
 
   const _Mapa({
     required this.controlador,
@@ -409,6 +444,7 @@ class _Mapa extends StatelessWidget {
     required this.onPreparat,
     required this.onTriaPunt,
     required this.onTocaMapa,
+    this.margeDret = 16,
   });
 
   @override
@@ -465,7 +501,7 @@ class _Mapa extends StatelessWidget {
       if (seleccionat != null)
         Positioned(
           left: 16,
-          right: 16,
+          right: margeDret,
           top: 12,
           child: Card(
             elevation: 4,
