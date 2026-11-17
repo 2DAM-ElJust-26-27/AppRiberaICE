@@ -41,7 +41,7 @@ Per esborrar la base de dades i començar de zero: `docker compose down -v`.
 
 ### 2. App Flutter
 
-Tres pestanyes:
+Tres pestanyes (Centres és la primera en obrir l'app):
 
 - **Serveis**: l'assistent guiat «Carlos Collado» pregunta per a qui és l'ajuda, en quin municipi i quin tipus de
   lloc, i proposa els serveis que encaixen (només ofereix opcions amb resultats; també accepta text lliure).

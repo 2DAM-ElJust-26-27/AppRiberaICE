@@ -7,7 +7,7 @@ import 'assistent_estat.dart';
 enum EstatCarrega { inicial, carregant, llest, error }
 
 /// Pestanyes de la pantalla principal.
-enum Pestanya { serveis, centres, entitats }
+enum Pestanya { centres, serveis, entitats }
 
 /// Catàlegs, municipis i entitats (dades que comparteixen totes les pestanyes).
 class DirectoriEstat extends ChangeNotifier {

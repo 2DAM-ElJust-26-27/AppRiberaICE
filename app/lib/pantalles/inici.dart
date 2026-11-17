@@ -6,15 +6,15 @@ import 'centres_mapa.dart';
 import 'entitats.dart';
 
 /// Pantalla principal amb tres pestanyes:
+///  - Centres (primera en obrir l'app): mapa amb filtres de serveis
 ///  - Serveis: assistent guiat «Carlos Collado»
-///  - Centres: mapa amb filtres de serveis
 ///  - Entitats: llista d'entitats
 class PantallaInici extends StatelessWidget {
   const PantallaInici({super.key});
 
   static const _destins = [
-    (Pestanya.serveis, Icons.support_agent_outlined, Icons.support_agent, 'Serveis'),
     (Pestanya.centres, Icons.map_outlined, Icons.map, 'Centres'),
+    (Pestanya.serveis, Icons.support_agent_outlined, Icons.support_agent, 'Serveis'),
     (Pestanya.entitats, Icons.apartment_outlined, Icons.apartment, 'Entitats'),
   ];
 
@@ -30,7 +30,7 @@ class PantallaInici extends StatelessWidget {
         final index = actual.index;
         final cos = IndexedStack(
           index: index,
-          children: const [PantallaAssistent(), PantallaCentres(), PantallaEntitats()],
+          children: const [PantallaCentres(), PantallaAssistent(), PantallaEntitats()],
         );
         void canvia(int i) => estat.pestanya.value = Pestanya.values[i];
 

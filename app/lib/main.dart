@@ -22,7 +22,7 @@ class ConnectantRibera extends StatelessWidget {
 
   ConnectantRibera({super.key, required this.directori, required this.centres, required this.assistent});
 
-  final _pestanya = ValueNotifier(Pestanya.serveis);
+  final _pestanya = ValueNotifier(Pestanya.centres);
 
   @override
   Widget build(BuildContext context) {

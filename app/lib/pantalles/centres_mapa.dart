@@ -23,6 +23,7 @@ class PantallaCentres extends StatefulWidget {
 
 class _PantallaCentresState extends State<PantallaCentres> {
   final _mapa = MapController();
+  final _scroll = ScrollController();
   bool _mapaPreparat = false;
   CentreResum? _seleccionat;
   CentresEstat? _estat;
@@ -40,6 +41,7 @@ class _PantallaCentresState extends State<PantallaCentres> {
   @override
   void dispose() {
     _estat?.removeListener(_enquadra);
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -67,12 +69,22 @@ class _PantallaCentresState extends State<PantallaCentres> {
     }
     setState(() => _seleccionat = c);
     _mapa.move(LatLng(c.latitud!, c.longitud!), 15);
+    if (_scroll.hasClients && _scroll.offset > 0) {
+      _scroll.animateTo(0, duration: const Duration(milliseconds: 350), curve: Curves.easeOut);
+    }
   }
+
+  /// Llista plegada o desplegada. Per defecte: oberta en pantalla ampla, plegada en vertical.
+  bool? _llistaOberta;
+
+  void _commutaLlista() => setState(() => _llistaOberta = !(_llistaOberta ?? false));
 
   @override
   Widget build(BuildContext context) {
     final e = EstatApp.of(context).centres;
-    final ample = MediaQuery.sizeOf(context).width >= 840;
+    final mida = MediaQuery.sizeOf(context);
+    final ample = mida.width >= 840;
+    final oberta = _llistaOberta ?? ample;
 
     return ListenableBuilder(
       listenable: e,
@@ -88,38 +100,148 @@ class _PantallaCentresState extends State<PantallaCentres> {
           onTriaPunt: (c) => setState(() => _seleccionat = c),
           onTocaMapa: () => setState(() => _seleccionat = null),
         );
-        final llista = _LlistaCentres(estat: e, seleccionat: _seleccionat, onTria: _selecciona);
+
+        final Widget cos;
+        if (e.estat == EstatCarrega.error) {
+          cos = MissatgeEstat.error(e.error ?? '', e.carrega);
+        } else if (ample) {
+          // Pantalla ampla: mapa + panell lateral plegable.
+          cos = Row(children: [
+            Expanded(
+              child: Stack(children: [
+                Positioned.fill(child: mapa),
+                if (!oberta)
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: FloatingActionButton.extended(
+                      heroTag: 'llista-centres',
+                      onPressed: _commutaLlista,
+                      icon: const Icon(Icons.list),
+                      label: Text('Llista (${e.centres.length})'),
+                    ),
+                  ),
+              ]),
+            ),
+            if (oberta) ...[
+              const VerticalDivider(width: 1),
+              SizedBox(
+                width: 380,
+                child: CustomScrollView(slivers: [
+                  _CapcaleraLlista(estat: e, oberta: true, onCommuta: _commutaLlista),
+                  ..._llistaSlivers(context, e),
+                ]),
+              ),
+            ],
+          ]);
+        } else {
+          // Vertical: tota la pantalla fa scroll; el mapa es veu sencer i la llista es plega a sota.
+          final alcadaMapa = (mida.height * 0.62).clamp(300.0, 700.0);
+          cos = CustomScrollView(controller: _scroll, slivers: [
+            SliverToBoxAdapter(child: SizedBox(height: alcadaMapa, child: mapa)),
+            _CapcaleraLlista(estat: e, oberta: oberta, onCommuta: _commutaLlista),
+            if (oberta) ..._llistaSlivers(context, e),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          ]);
+        }
 
         return Column(children: [
-          const _BarraFiltres(), // escolta ella mateixa centres i catàlegs
+          const _BarraFiltres(),
           if (e.estat == EstatCarrega.carregant) const LinearProgressIndicator(minHeight: 2) else const SizedBox(height: 2),
-          Expanded(
-            child: e.estat == EstatCarrega.error
-                ? MissatgeEstat.error(e.error ?? '', e.carrega)
-                : ample
-                    ? Row(children: [
-                        Expanded(child: mapa),
-                        const VerticalDivider(width: 1),
-                        SizedBox(width: 400, child: llista),
-                      ])
-                    : Stack(children: [
-                        Positioned.fill(child: mapa),
-                        DraggableScrollableSheet(
-                          initialChildSize: 0.32,
-                          minChildSize: 0.12,
-                          maxChildSize: 0.9,
-                          snap: true,
-                          builder: (context, scroll) => Material(
-                            elevation: 8,
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                            clipBehavior: Clip.antiAlias,
-                            child: _LlistaCentres(estat: e, seleccionat: _seleccionat, onTria: _selecciona, scroll: scroll, ambNansa: true),
-                          ),
-                        ),
-                      ]),
-          ),
+          Expanded(child: cos),
         ]);
       },
+    );
+  }
+
+  List<Widget> _llistaSlivers(BuildContext context, CentresEstat e) {
+    final t = Theme.of(context);
+    final centres = e.centres;
+    if (e.estat != EstatCarrega.llest && centres.isEmpty) {
+      return const [SliverToBoxAdapter(child: Carregant())];
+    }
+    if (centres.isEmpty) {
+      return [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(children: [
+              const Nota('Cap centre coincideix amb aquests filtres. Pot ser que el servei no tinga cap centre associat '
+                  '(la ubicació pot ser desconeguda) o que no hi haja dades.'),
+              if (e.filtres.actius) TextButton(onPressed: e.neteja, child: const Text('Neteja els filtres')),
+            ]),
+          ),
+        ),
+      ];
+    }
+    return [
+      SliverList.builder(
+        itemCount: centres.length,
+        itemBuilder: (context, i) {
+          final c = centres[i];
+          return ListTile(
+            selected: c == _seleccionat,
+            leading: Icon(c.tePunt ? Icons.location_on : Icons.location_off_outlined,
+                color: c.tePunt ? t.colorScheme.primary : t.colorScheme.outline),
+            title: Text(c.nom),
+            subtitle: Text([if (c.tipusCentre != null) c.tipusCentre!.nom, if (c.municipi != null) c.municipi!.nom].join(' · ')),
+            trailing: IconButton(
+              tooltip: 'Obri la fitxa',
+              icon: const Icon(Icons.chevron_right),
+              onPressed: () => obriCentre(context, c.id),
+            ),
+            onTap: () => _selecciona(c),
+          );
+        },
+      ),
+    ];
+  }
+}
+
+/// Capçalera de la llista de centres: recompte i botó per plegar/desplegar.
+class _CapcaleraLlista extends StatelessWidget {
+  final CentresEstat estat;
+  final bool oberta;
+  final VoidCallback onCommuta;
+
+  const _CapcaleraLlista({required this.estat, required this.oberta, required this.onCommuta});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context);
+    final centres = estat.centres;
+    final ambPunt = centres.where((c) => c.tePunt).length;
+    final carregant = estat.estat != EstatCarrega.llest && centres.isEmpty;
+    return SliverToBoxAdapter(
+      child: Material(
+        color: t.colorScheme.surfaceContainerLow,
+        child: InkWell(
+          onTap: onCommuta,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+            child: Row(children: [
+              Icon(Icons.list, color: t.colorScheme.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(carregant ? 'Carregant centres…' : '${centres.length} ${centres.length == 1 ? 'centre' : 'centres'}',
+                      style: t.textTheme.titleMedium),
+                  if (!carregant && centres.isNotEmpty)
+                    Text(
+                      ambPunt == centres.length ? 'Tots apareixen al mapa' : '$ambPunt al mapa · ${centres.length - ambPunt} sense coordenades',
+                      style: t.textTheme.bodySmall?.copyWith(color: t.colorScheme.onSurfaceVariant),
+                    ),
+                ]),
+              ),
+              TextButton.icon(
+                onPressed: onCommuta,
+                icon: Icon(oberta ? Icons.expand_less : Icons.expand_more),
+                label: Text(oberta ? 'Plega' : 'Mostra'),
+              ),
+            ]),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -290,90 +412,6 @@ class _Mapa extends StatelessWidget {
             ),
           ),
         ),
-    ]);
-  }
-}
-
-// ------------------------------------------------------------------ llista
-
-class _LlistaCentres extends StatelessWidget {
-  final CentresEstat estat;
-  final CentreResum? seleccionat;
-  final ValueChanged<CentreResum> onTria;
-  final ScrollController? scroll;
-  final bool ambNansa;
-
-  const _LlistaCentres({required this.estat, required this.seleccionat, required this.onTria, this.scroll, this.ambNansa = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final t = Theme.of(context);
-    final centres = estat.centres;
-    final ambPunt = centres.where((c) => c.tePunt).length;
-    final carregant = estat.estat != EstatCarrega.llest && centres.isEmpty;
-
-    return CustomScrollView(controller: scroll, slivers: [
-      SliverToBoxAdapter(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          if (ambNansa)
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 10, bottom: 4),
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(color: t.colorScheme.outlineVariant, borderRadius: BorderRadius.circular(2)),
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: Text(
-              carregant ? 'Carregant centres…' : '${centres.length} ${centres.length == 1 ? 'centre' : 'centres'}',
-              style: t.textTheme.titleMedium,
-            ),
-          ),
-          if (!carregant && centres.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Nota(ambPunt == centres.length
-                  ? 'Tots apareixen al mapa.'
-                  : '$ambPunt al mapa · ${centres.length - ambPunt} sense coordenades conegudes (toca per vore la fitxa).'),
-            ),
-        ]),
-      ),
-      if (carregant)
-        const SliverToBoxAdapter(child: Carregant())
-      else if (centres.isEmpty)
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(children: [
-              const Nota('Cap centre coincideix amb aquests filtres. Pot ser que el servei no tinga cap centre associat '
-                  '(la ubicació pot ser desconeguda) o que no hi haja dades.'),
-              if (estat.filtres.actius) TextButton(onPressed: estat.neteja, child: const Text('Neteja els filtres')),
-            ]),
-          ),
-        )
-      else
-        SliverList.builder(
-          itemCount: centres.length,
-          itemBuilder: (context, i) {
-            final c = centres[i];
-            return ListTile(
-              selected: c == seleccionat,
-              leading: Icon(c.tePunt ? Icons.location_on : Icons.location_off_outlined,
-                  color: c.tePunt ? t.colorScheme.primary : t.colorScheme.outline),
-              title: Text(c.nom),
-              subtitle: Text([if (c.tipusCentre != null) c.tipusCentre!.nom, if (c.municipi != null) c.municipi!.nom].join(' · ')),
-              trailing: IconButton(
-                tooltip: 'Obri la fitxa',
-                icon: const Icon(Icons.chevron_right),
-                onPressed: () => obriCentre(context, c.id),
-              ),
-              onTap: () => onTria(c),
-            );
-          },
-        ),
-      const SliverToBoxAdapter(child: SizedBox(height: 24)),
     ]);
   }
 }
