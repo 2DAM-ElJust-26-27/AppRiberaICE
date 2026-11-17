@@ -59,7 +59,9 @@ class _PantallaEntitatsState extends State<PantallaEntitats> {
         final ordenades = formes.values.toList()..sort((a, b) => a.nom.compareTo(b.nom));
         final llista = _forma == null ? _entitats : _entitats.where((e) => e.formaJuridica?.codi == _forma).toList();
 
-        return Align(
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 900),
@@ -84,6 +86,7 @@ class _PantallaEntitatsState extends State<PantallaEntitats> {
               ),
             ),
           ),
+        ),
         );
   }
 }

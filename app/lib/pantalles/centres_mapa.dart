@@ -186,7 +186,13 @@ class _PantallaCentresState extends State<PantallaCentres> {
         onNeteja: _neteja,
       ),
       if (_estat == EstatCarrega.carregant) const LinearProgressIndicator(minHeight: 2) else const SizedBox(height: 2),
-      Expanded(child: cos),
+      // Marge als costats i per baix perquè el mapa no quede tallat a la vora de la finestra.
+      Expanded(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+          child: ClipRRect(borderRadius: BorderRadius.circular(16), child: cos),
+        ),
+      ),
     ]);
   }
 
