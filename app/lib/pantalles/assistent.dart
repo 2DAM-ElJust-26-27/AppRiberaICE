@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../dades/api_ribera.dart';
-import '../estat/assistent_estat.dart';
-import '../estat/estat_app.dart';
+import '../logica/assistent.dart';
 import '../widgets/targetes.dart';
 
 /// Pestanya Serveis: xat guiat amb l'assistent «Carlos Collado».
 class PantallaAssistent extends StatefulWidget {
-  const PantallaAssistent({super.key});
+  /// Es crida quan l'usuari vol vore els resultats al mapa (pestanya Centres).
+  final ValueChanged<Filtres> onVeureAlMapa;
+
+  const PantallaAssistent({super.key, required this.onVeureAlMapa});
 
   @override
   State<PantallaAssistent> createState() => _PantallaAssistentState();
@@ -16,10 +18,22 @@ class PantallaAssistent extends StatefulWidget {
 class _PantallaAssistentState extends State<PantallaAssistent> {
   final _scroll = ScrollController();
   final _text = TextEditingController();
+  late final AssistentEstat _assistent;
   int _vistos = 0;
 
   @override
+  void initState() {
+    super.initState();
+    // Cada vegada que la conversa canvia, l'assistent crida aquesta funció i redibuixem.
+    _assistent = AssistentEstat(apiRibera, onCanvi: () {
+      if (mounted) setState(() {});
+    });
+    _assistent.comenca();
+  }
+
+  @override
   void dispose() {
+    _assistent.onCanvi = null;
     _scroll.dispose();
     _text.dispose();
     super.dispose();
@@ -34,65 +48,58 @@ class _PantallaAssistentState extends State<PantallaAssistent> {
   }
 
   void _tria(Opcio o) {
-    final estat = EstatApp.of(context);
     if (o.accio == Accio.veureMapa) {
-      final f = estat.assistent.filtres;
-      final res = estat.assistent.resultats;
-      estat.centres.aplica(Filtres(
+      final f = _assistent.filtres;
+      final res = _assistent.resultats;
+      widget.onVeureAlMapa(Filtres(
         collectiu: f.collectiu,
         municipiId: f.municipiId,
         tipusCentre: f.tipusCentre,
         serveiId: res.length == 1 ? res.first.id : null,
       ));
-      estat.pestanya.value = Pestanya.centres;
     }
-    estat.assistent.tria(o);
+    _assistent.tria(o);
   }
 
   void _envia() {
     final t = _text.text;
     _text.clear();
-    EstatApp.of(context).assistent.escriu(t);
+    _assistent.escriu(t);
   }
 
   @override
   Widget build(BuildContext context) {
-    final a = EstatApp.of(context).assistent;
-    return ListenableBuilder(
-      listenable: a,
-      builder: (context, _) {
-        if (a.missatges.length != _vistos || a.escrivint) {
-          _vistos = a.missatges.length;
-          _baixa();
-        }
-        final opcions = a.opcionsActives;
-        return Column(children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 760),
-                child: ListView(
-                  controller: _scroll,
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                  children: [
-                    for (var i = 0; i < a.missatges.length; i++)
-                      _Bombolla(
-                        missatge: a.missatges[i],
-                        mostraAvatar: a.missatges[i].autor == Autor.assistent &&
-                            (i == 0 || a.missatges[i - 1].autor != Autor.assistent),
-                      ),
-                    if (a.escrivint) const _Escrivint(),
-                    if (!a.escrivint && opcions.isNotEmpty) _Opcions(opcions: opcions, onTria: _tria),
-                  ],
-                ),
-              ),
+    final a = _assistent;
+    if (a.missatges.length != _vistos || a.escrivint) {
+      _vistos = a.missatges.length;
+      _baixa();
+    }
+    final opcions = a.opcionsActives;
+    return Column(children: [
+      Expanded(
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: ListView(
+              controller: _scroll,
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              children: [
+                for (var i = 0; i < a.missatges.length; i++)
+                  _Bombolla(
+                    missatge: a.missatges[i],
+                    mostraAvatar: a.missatges[i].autor == Autor.assistent &&
+                        (i == 0 || a.missatges[i - 1].autor != Autor.assistent),
+                  ),
+                if (a.escrivint) const _Escrivint(),
+                if (!a.escrivint && opcions.isNotEmpty) _Opcions(opcions: opcions, onTria: _tria),
+              ],
             ),
           ),
-          _BarraText(controlador: _text, onEnvia: _envia, actiu: !a.escrivint),
-        ]);
-      },
-    );
+        ),
+      ),
+      _BarraText(controlador: _text, onEnvia: _envia, actiu: !a.escrivint),
+    ]);
   }
 }
 

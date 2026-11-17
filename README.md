@@ -9,7 +9,7 @@ Aquest repositori conté **només la part d'usuari** (consulta): no hi ha part d
 | --- | --- | --- |
 | Base de dades | PostgreSQL 16 | [`bd/`](bd) |
 | API + importador | Java 21 · Javalin 6 · JDBC (Maven) | [`api/`](api) |
-| Client | Flutter (estat amb `ChangeNotifier`, sense Riverpod) | [`app/`](app) |
+| Client | Flutter (estat amb `StatefulWidget` + `setState`, sense gestors d'estat) | [`app/`](app) |
 | Servidor | Docker Compose | [`docker-compose.yml`](docker-compose.yml) |
 | Dades del Sprint 1 | XML · CSV · JSON (originals, sense modificar) | [`dades/sprint-1/`](dades/sprint-1) |
 | Dades complementàries | punts de 16 centres geocodificats amb CartoCiudad (IGN/CNIG) | [`dades/complements/`](dades/complements) |

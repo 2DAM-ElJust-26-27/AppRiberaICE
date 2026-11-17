@@ -5,6 +5,9 @@ library;
 
 typedef Json = Map<String, dynamic>;
 
+/// Estat d'una càrrega de dades des de l'API.
+enum EstatCarrega { carregant, llest, error }
+
 List<T> _llista<T>(dynamic v, T Function(Json) f) =>
     v is List ? v.whereType<Map>().map((e) => f(Map<String, dynamic>.from(e))).toList() : <T>[];
 

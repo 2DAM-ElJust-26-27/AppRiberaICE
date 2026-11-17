@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../dades/api_ribera.dart';
 import '../models/models.dart';
 import '../widgets/comuns.dart';
 import '../widgets/contactes.dart';
@@ -17,7 +18,7 @@ class DetallEntitat extends StatelessWidget {
   Widget build(BuildContext context) {
     return FitxaFutura<EntitatDetall>(
       titol: 'Entitat',
-      carrega: () => context.api.entitat(id),
+      carrega: () => apiRibera.entitat(id),
       construeix: (context, e) {
         final adreca = [
           if (e.adreca != null) e.adreca!,

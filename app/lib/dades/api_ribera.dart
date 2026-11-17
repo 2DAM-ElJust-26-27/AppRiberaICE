@@ -115,3 +115,7 @@ class ApiRibera {
 
   Future<EntitatDetall> entitat(int id) async => EntitatDetall.fromJson(_objecte(await _get('entitats/$id')));
 }
+
+/// Client únic de l'API per a tota l'app.
+/// L'URL es configura a [Config.urlApi] (--dart-define=API_URL=...).
+final ApiRibera apiRibera = ApiRibera();

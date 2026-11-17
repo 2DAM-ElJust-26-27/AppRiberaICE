@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../dades/api_ribera.dart';
 import '../models/models.dart';
 import '../widgets/comuns.dart';
 import '../widgets/contactes.dart';
@@ -17,7 +18,7 @@ class DetallServei extends StatelessWidget {
   Widget build(BuildContext context) {
     return FitxaFutura<ServeiDetall>(
       titol: 'Servei',
-      carrega: () => context.api.servei(id),
+      carrega: () => apiRibera.servei(id),
       construeix: (context, s) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         CapcaleraFitxa(icona: Icons.volunteer_activism_outlined, titol: s.nom, subtitol: s.descripcio),
         if (s.collectius.isNotEmpty)

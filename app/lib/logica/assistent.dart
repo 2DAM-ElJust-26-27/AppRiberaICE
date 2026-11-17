@@ -35,14 +35,23 @@ enum Pas { collectiu, municipi, tipusCentre, resultats }
 /// No és cap IA: fa preguntes fixes (per a qui, on, quin tipus de lloc) i
 /// només ofereix opcions que tenen resultats amb les respostes anteriors.
 /// Totes les consultes es fan contra l'API del directori.
-class AssistentEstat extends ChangeNotifier {
+///
+/// És una classe normal de Dart (sense cap gestor d'estat): guarda la conversa i,
+/// cada vegada que canvia, crida [onCanvi]. La pantalla hi passa una funció que
+/// fa `setState` per tornar-se a dibuixar.
+class AssistentEstat {
   static const nom = 'Carlos Collado';
   static const maxSenseMesPreguntes = 3;
 
   final ApiRibera api;
   final Duration pausa;
 
-  AssistentEstat(this.api, {this.pausa = const Duration(milliseconds: 450)});
+  /// S'executa cada vegada que canvia la conversa.
+  VoidCallback? onCanvi;
+
+  AssistentEstat(this.api, {this.pausa = const Duration(milliseconds: 450), this.onCanvi});
+
+  void _avisa() => onCanvi?.call();
 
   final List<Missatge> missatges = [];
   Filtres filtres = const Filtres();
@@ -58,7 +67,7 @@ class AssistentEstat extends ChangeNotifier {
     missatges.clear();
     filtres = const Filtres();
     pas = Pas.collectiu;
-    notifyListeners();
+    _avisa();
     await _diu('Hola! Sóc en $nom 👋\nT\'ajudaré a trobar el servei social o comunitari que necessites a la Ribera. '
         'Et faré unes poques preguntes. També pots escriure el que busques amb les teues paraules.');
     await _preguntaCollectiu();
@@ -241,15 +250,15 @@ class AssistentEstat extends ChangeNotifier {
 
   void _usuari(String text) {
     missatges.add(Missatge(Autor.usuari, text));
-    notifyListeners();
+    _avisa();
   }
 
   Future<void> _diu(String text, {List<Opcio> opcions = const [], List<ServeiResum> serveis = const []}) async {
     escrivint = true;
-    notifyListeners();
+    _avisa();
     if (pausa > Duration.zero) await Future<void>.delayed(pausa);
     escrivint = false;
     missatges.add(Missatge(Autor.assistent, text, opcions: opcions, serveis: serveis));
-    notifyListeners();
+    _avisa();
   }
 }

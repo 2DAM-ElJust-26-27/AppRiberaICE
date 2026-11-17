@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../dades/api_ribera.dart';
 import '../models/models.dart';
 import '../widgets/comuns.dart';
 import '../widgets/contactes.dart';
@@ -17,7 +18,7 @@ class DetallCentre extends StatelessWidget {
   Widget build(BuildContext context) {
     return FitxaFutura<CentreDetall>(
       titol: 'Centre',
-      carrega: () => context.api.centre(id),
+      carrega: () => apiRibera.centre(id),
       construeix: (context, d) {
         final c = d.resum;
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

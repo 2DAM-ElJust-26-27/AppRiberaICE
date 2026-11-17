@@ -1,5 +1,5 @@
 import 'package:connectant_ribera/dades/api_ribera.dart';
-import 'package:connectant_ribera/estat/assistent_estat.dart';
+import 'package:connectant_ribera/logica/assistent.dart';
 import 'package:connectant_ribera/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 

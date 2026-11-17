@@ -34,7 +34,7 @@ AppRivera/
 5. **API REST de només lectura**: municipis, catàlegs, serveis (amb filtres), centres,
    entitats.
 6. **App Flutter**: directori amb cerca, filtres, fitxes de detall amb contactes clicables,
-   mapa (`flutter_map` + OpenStreetMap amb atribució). Estat amb `ChangeNotifier`.
+   mapa (`flutter_map` + OpenStreetMap amb atribució). Estat amb `StatefulWidget` + `setState` (sense gestors d'estat).
 7. **Proves i documentació**.
 
 ## Decisions preses

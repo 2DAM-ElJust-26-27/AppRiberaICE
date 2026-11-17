@@ -1,28 +1,34 @@
 import 'package:flutter/material.dart';
 
 import '../dades/api_ribera.dart';
-import '../estat/estat_app.dart';
 import '../models/models.dart';
 
 /// Full inferior amb els filtres de serveis de la pestanya Centres.
 /// Les opcions de «Servei» es recalculen amb la resta de filtres.
-Future<void> mostraFiltresCentres(BuildContext context) async {
-  final estat = EstatApp.of(context);
-  final resultat = await showModalBottomSheet<Filtres>(
+/// Retorna els filtres triats, o null si l'usuari tanca el full sense aplicar.
+Future<Filtres?> mostraFiltresCentres(
+  BuildContext context, {
+  required Filtres filtres,
+  required List<Municipi> municipis,
+  required Catalegs catalegs,
+  required List<ServeiResum> serveis,
+}) {
+  return showModalBottomSheet<Filtres>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
     useSafeArea: true,
-    builder: (_) => _FullFiltres(estat: estat, inicials: estat.centres.filtres),
+    builder: (_) => _FullFiltres(inicials: filtres, municipis: municipis, catalegs: catalegs, serveis: serveis),
   );
-  if (resultat != null) estat.centres.aplica(resultat);
 }
 
 class _FullFiltres extends StatefulWidget {
-  final EstatApp estat;
   final Filtres inicials;
+  final List<Municipi> municipis;
+  final Catalegs catalegs;
+  final List<ServeiResum> serveis;
 
-  const _FullFiltres({required this.estat, required this.inicials});
+  const _FullFiltres({required this.inicials, required this.municipis, required this.catalegs, required this.serveis});
 
   @override
   State<_FullFiltres> createState() => _FullFiltresState();
@@ -36,7 +42,7 @@ class _FullFiltresState extends State<_FullFiltres> {
   @override
   void initState() {
     super.initState();
-    _serveis = widget.estat.centres.serveisDisponibles;
+    _serveis = widget.serveis;
   }
 
   /// Canvia un filtre i torna a calcular quins serveis hi encaixen.
@@ -46,7 +52,7 @@ class _FullFiltresState extends State<_FullFiltres> {
       _carregantServeis = true;
     });
     try {
-      final serveis = await widget.estat.directori.api.serveis(nous);
+      final serveis = await apiRibera.serveis(nous);
       if (!mounted) return;
       setState(() {
         _serveis = serveis;
@@ -64,9 +70,8 @@ class _FullFiltresState extends State<_FullFiltres> {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context);
-    final d = widget.estat.directori;
     final comarques = <String, List<Municipi>>{};
-    for (final m in d.municipis) {
+    for (final m in widget.municipis) {
       comarques.putIfAbsent(m.comarca?.nom ?? 'Altres', () => []).add(m);
     }
 
@@ -83,7 +88,7 @@ class _FullFiltresState extends State<_FullFiltres> {
           Text('Per a qui és el servei', style: t.textTheme.titleSmall),
           const SizedBox(height: 8),
           _Xips(
-            opcions: d.catalegs.collectius,
+            opcions: widget.catalegs.collectius,
             seleccionat: f.collectiu,
             onCanvi: (v) => _canvia(f.copyWith(collectiu: () => v)),
           ),
@@ -111,7 +116,7 @@ class _FullFiltresState extends State<_FullFiltres> {
           Text('Tipus de centre', style: t.textTheme.titleSmall),
           const SizedBox(height: 8),
           _Xips(
-            opcions: d.catalegs.tipusCentre,
+            opcions: widget.catalegs.tipusCentre,
             seleccionat: f.tipusCentre,
             onCanvi: (v) => _canvia(f.copyWith(tipusCentre: () => v)),
           ),

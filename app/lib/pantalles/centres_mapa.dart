@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../estat/estat_app.dart';
+import '../dades/api_ribera.dart';
 import '../models/models.dart';
 import '../widgets/comuns.dart';
 import '../widgets/contactes.dart';
@@ -11,8 +11,24 @@ import '../widgets/targetes.dart';
 
 /// Pestanya Centres: mapa amb filtres de serveis i llista dels centres on es presten.
 /// Els centres sense coordenades no es dibuixen (mai a (0,0)); apareixen a la llista.
+///
+/// Tot l'estat (filtres, resultats, centre seleccionat) es guarda en aquest
+/// `State` i es canvia amb `setState`.
 class PantallaCentres extends StatefulWidget {
-  const PantallaCentres({super.key});
+  final List<Municipi> municipis;
+  final Catalegs catalegs;
+  final bool catalegsCarregats;
+
+  /// Filtres que arriben des d'una altra pestanya (l'assistent). Quan canvien, s'apliquen.
+  final Filtres? filtresExterns;
+
+  const PantallaCentres({
+    super.key,
+    required this.municipis,
+    required this.catalegs,
+    required this.catalegsCarregats,
+    this.filtresExterns,
+  });
 
   /// Centre aproximat de la Ribera Alta i la Ribera Baixa.
   static const centreRibera = LatLng(39.15, -0.40);
@@ -25,30 +41,69 @@ class _PantallaCentresState extends State<PantallaCentres> {
   final _mapa = MapController();
   bool _mapaPreparat = false;
   CentreResum? _seleccionat;
-  CentresEstat? _estat;
+
+  Filtres _filtres = const Filtres();
+  List<CentreResum> _centres = [];
+  List<ServeiResum> _serveis = []; // serveis que encaixen amb els filtres (per al selector de servei)
+  EstatCarrega _estat = EstatCarrega.carregant;
+  String? _error;
+  int _peticio = 0; // per ignorar respostes velles si l'usuari canvia de filtre ràpid
+
+  List<CentreResum> get _ambPunt => _centres.where((c) => c.tePunt).toList();
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final e = EstatApp.of(context).centres;
-    if (_estat != e) {
-      _estat?.removeListener(_enquadra);
-      _estat = e..addListener(_enquadra);
+  void initState() {
+    super.initState();
+    if (widget.filtresExterns != null) _filtres = widget.filtresExterns!;
+    _carrega();
+  }
+
+  @override
+  void didUpdateWidget(PantallaCentres anterior) {
+    super.didUpdateWidget(anterior);
+    // L'assistent ens ha enviat filtres nous.
+    if (widget.filtresExterns != null && widget.filtresExterns != anterior.filtresExterns) {
+      _aplica(widget.filtresExterns!);
     }
   }
 
-  @override
-  void dispose() {
-    _estat?.removeListener(_enquadra);
-    super.dispose();
+  Future<void> _carrega() async {
+    final num = ++_peticio;
+    setState(() {
+      _estat = EstatCarrega.carregant;
+      _error = null;
+    });
+    try {
+      final centres = await apiRibera.centres(_filtres);
+      final serveis = await apiRibera.serveis(_filtres);
+      if (num != _peticio || !mounted) return;
+      setState(() {
+        _centres = centres;
+        _serveis = serveis;
+        _estat = EstatCarrega.llest;
+        if (_seleccionat != null && !_centres.contains(_seleccionat)) _seleccionat = null;
+      });
+      _enquadra();
+    } catch (e) {
+      if (num != _peticio || !mounted) return;
+      setState(() {
+        _estat = EstatCarrega.error;
+        _error = e.toString();
+      });
+    }
   }
 
-  /// Ajusta la càmera als punts dels resultats quan arriben.
+  void _aplica(Filtres nous) {
+    _filtres = nous;
+    _carrega();
+  }
+
+  void _neteja() => _aplica(const Filtres());
+
+  /// Ajusta la càmera als punts dels resultats.
   void _enquadra() {
-    final e = _estat!;
-    if (!_mapaPreparat || e.estat != EstatCarrega.llest) return;
-    if (_seleccionat != null && !e.centres.contains(_seleccionat)) _seleccionat = null;
-    final punts = e.ambPunt.map((c) => LatLng(c.latitud!, c.longitud!)).toList();
+    if (!_mapaPreparat || _estat != EstatCarrega.llest) return;
+    final punts = _ambPunt.map((c) => LatLng(c.latitud!, c.longitud!)).toList();
     try {
       if (punts.isEmpty) {
         _mapa.move(PantallaCentres.centreRibera, 10);
@@ -69,52 +124,87 @@ class _PantallaCentresState extends State<PantallaCentres> {
     _mapa.move(LatLng(c.latitud!, c.longitud!), 15);
   }
 
+  Future<void> _obriFiltres() async {
+    final nous = await mostraFiltresCentres(
+      context,
+      filtres: _filtres,
+      municipis: widget.municipis,
+      catalegs: widget.catalegs,
+      serveis: _serveis,
+    );
+    if (nous != null) _aplica(nous);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final e = EstatApp.of(context).centres;
-
-    return ListenableBuilder(
-      listenable: e,
-      builder: (context, _) {
-        final mapa = _Mapa(
-          controlador: _mapa,
-          punts: e.ambPunt,
-          seleccionat: _seleccionat,
-          onPreparat: () {
-            _mapaPreparat = true;
-            _enquadra();
-          },
-          onTriaPunt: (c) => setState(() => _seleccionat = c),
-          onTocaMapa: () => setState(() => _seleccionat = null),
-        );
-
-        final Widget cos = e.estat == EstatCarrega.error
-            ? MissatgeEstat.error(e.error ?? '', e.carrega)
-            : Stack(children: [
-                Positioned.fill(child: mapa),
-                Positioned(
-                  right: 16,
-                  bottom: 48,
-                  child: FloatingActionButton.extended(
-                    heroTag: 'llista-centres',
-                    onPressed: () => _mostraLlista(context, e),
-                    icon: const Icon(Icons.list),
-                    label: Text('Llista (${e.centres.length})'),
-                  ),
-                ),
-              ]);
-
-        return Column(children: [
-          const _BarraFiltres(),
-          if (e.estat == EstatCarrega.carregant) const LinearProgressIndicator(minHeight: 2) else const SizedBox(height: 2),
-          Expanded(child: cos),
-        ]);
+    final mapa = _Mapa(
+      controlador: _mapa,
+      punts: _ambPunt,
+      seleccionat: _seleccionat,
+      onPreparat: () {
+        _mapaPreparat = true;
+        _enquadra();
       },
+      onTriaPunt: (c) => setState(() => _seleccionat = c),
+      onTocaMapa: () => setState(() => _seleccionat = null),
     );
+
+    final Widget cos = _estat == EstatCarrega.error
+        ? MissatgeEstat.error(_error ?? '', _carrega)
+        : Stack(children: [
+            Positioned.fill(child: mapa),
+            Positioned(
+              right: 16,
+              bottom: 48,
+              child: FloatingActionButton.extended(
+                heroTag: 'llista-centres',
+                onPressed: _mostraLlista,
+                icon: const Icon(Icons.list),
+                label: Text('Llista (${_centres.length})'),
+              ),
+            ),
+          ]);
+
+    return Column(children: [
+      _BarraFiltres(
+        filtres: _filtres,
+        actiu: widget.catalegsCarregats,
+        nomServei: _nomServei(_filtres.serveiId),
+        nomCollectiu: _nomCataleg(widget.catalegs.collectius, _filtres.collectiu),
+        nomMunicipi: _nomMunicipi(_filtres.municipiId),
+        nomTipus: _nomCataleg(widget.catalegs.tipusCentre, _filtres.tipusCentre),
+        onObriFiltres: _obriFiltres,
+        onCanvia: _aplica,
+        onNeteja: _neteja,
+      ),
+      if (_estat == EstatCarrega.carregant) const LinearProgressIndicator(minHeight: 2) else const SizedBox(height: 2),
+      Expanded(child: cos),
+    ]);
+  }
+
+  String? _nomServei(int? id) {
+    for (final s in _serveis) {
+      if (s.id == id) return s.nom;
+    }
+    return id == null ? null : 'Servei';
+  }
+
+  String? _nomMunicipi(int? id) {
+    for (final m in widget.municipis) {
+      if (m.id == id) return m.nom;
+    }
+    return null;
+  }
+
+  String? _nomCataleg(List<Ref> llista, String? codi) {
+    for (final r in llista) {
+      if (r.codi == codi) return r.nom;
+    }
+    return codi;
   }
 
   /// Obri la llista de centres en un full inferior que es pot arrossegar i tancar.
-  void _mostraLlista(BuildContext context, CentresEstat e) {
+  void _mostraLlista() {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -125,22 +215,19 @@ class _PantallaCentresState extends State<PantallaCentres> {
         initialChildSize: 0.6,
         minChildSize: 0.3,
         maxChildSize: 0.95,
-        builder: (_, scroll) => ListenableBuilder(
-          listenable: e,
-          builder: (_, __) => CustomScrollView(controller: scroll, slivers: [
-            _CapcaleraLlista(estat: e),
-            ..._llistaSlivers(fullContext, e),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-          ]),
-        ),
+        builder: (_, scroll) => CustomScrollView(controller: scroll, slivers: [
+          _CapcaleraLlista(centres: _centres, carregant: _estat == EstatCarrega.carregant),
+          ..._llistaSlivers(fullContext),
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        ]),
       ),
     );
   }
 
-  List<Widget> _llistaSlivers(BuildContext context, CentresEstat e) {
+  List<Widget> _llistaSlivers(BuildContext context) {
     final t = Theme.of(context);
-    final centres = e.centres;
-    if (e.estat != EstatCarrega.llest && centres.isEmpty) {
+    final centres = _centres;
+    if (_estat != EstatCarrega.llest && centres.isEmpty) {
       return const [SliverToBoxAdapter(child: Carregant())];
     }
     if (centres.isEmpty) {
@@ -151,7 +238,14 @@ class _PantallaCentresState extends State<PantallaCentres> {
             child: Column(children: [
               const Nota('Cap centre coincideix amb aquests filtres. Pot ser que el servei no tinga cap centre associat '
                   '(la ubicació pot ser desconeguda) o que no hi haja dades.'),
-              if (e.filtres.actius) TextButton(onPressed: e.neteja, child: const Text('Neteja els filtres')),
+              if (_filtres.actius)
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _neteja();
+                  },
+                  child: const Text('Neteja els filtres'),
+                ),
             ]),
           ),
         ),
@@ -189,23 +283,23 @@ class _PantallaCentresState extends State<PantallaCentres> {
 
 /// Capçalera de la llista de centres: recompte i quants surten al mapa.
 class _CapcaleraLlista extends StatelessWidget {
-  final CentresEstat estat;
+  final List<CentreResum> centres;
+  final bool carregant;
 
-  const _CapcaleraLlista({required this.estat});
+  const _CapcaleraLlista({required this.centres, required this.carregant});
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context);
-    final centres = estat.centres;
     final ambPunt = centres.where((c) => c.tePunt).length;
-    final carregant = estat.estat != EstatCarrega.llest && centres.isEmpty;
+    final buit = carregant && centres.isEmpty;
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(carregant ? 'Carregant centres…' : '${centres.length} ${centres.length == 1 ? 'centre' : 'centres'}',
+          Text(buit ? 'Carregant centres…' : '${centres.length} ${centres.length == 1 ? 'centre' : 'centres'}',
               style: t.textTheme.titleMedium),
-          if (!carregant && centres.isNotEmpty)
+          if (!buit && centres.isNotEmpty)
             Text(
               ambPunt == centres.length ? 'Tots apareixen al mapa' : '$ambPunt al mapa · ${centres.length - ambPunt} sense coordenades (toca per vore la fitxa)',
               style: t.textTheme.bodySmall?.copyWith(color: t.colorScheme.onSurfaceVariant),
@@ -218,22 +312,30 @@ class _CapcaleraLlista extends StatelessWidget {
 
 // ------------------------------------------------------------------ barra de filtres
 
+/// Barra superior: botó de filtres i xips dels filtres actius (es poden llevar d'un en un).
 class _BarraFiltres extends StatelessWidget {
-  const _BarraFiltres();
+  final Filtres filtres;
+  final bool actiu;
+  final String? nomServei, nomCollectiu, nomMunicipi, nomTipus;
+  final VoidCallback onObriFiltres;
+  final ValueChanged<Filtres> onCanvia;
+  final VoidCallback onNeteja;
+
+  const _BarraFiltres({
+    required this.filtres,
+    required this.actiu,
+    required this.nomServei,
+    required this.nomCollectiu,
+    required this.nomMunicipi,
+    required this.nomTipus,
+    required this.onObriFiltres,
+    required this.onCanvia,
+    required this.onNeteja,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final app = EstatApp.of(context);
-    final e = app.centres;
-    final d = app.directori;
-    return ListenableBuilder(
-      listenable: Listenable.merge([e, d]),
-      builder: (context, _) => _construeix(context, e, d),
-    );
-  }
-
-  Widget _construeix(BuildContext context, CentresEstat e, DirectoriEstat d) {
-    final f = e.filtres;
+    final f = filtres;
     final t = Theme.of(context);
 
     return SizedBox(
@@ -246,7 +348,7 @@ class _BarraFiltres extends StatelessWidget {
             isLabelVisible: f.actius,
             label: Text('${f.nombreActius}'),
             child: FilledButton.tonalIcon(
-              onPressed: d.estatCatalegs == EstatCarrega.llest ? () => mostraFiltresCentres(context) : null,
+              onPressed: actiu ? onObriFiltres : null,
               icon: const Icon(Icons.tune),
               label: const Text('Filtra per servei'),
             ),
@@ -258,16 +360,14 @@ class _BarraFiltres extends StatelessWidget {
                   style: t.textTheme.bodySmall?.copyWith(color: t.colorScheme.onSurfaceVariant)),
             ),
           if (f.serveiId != null)
-            _Xip(Icons.volunteer_activism_outlined, e.serveiSeleccionat?.nom ?? 'Servei', () => e.aplica(f.copyWith(serveiId: () => null))),
+            _Xip(Icons.volunteer_activism_outlined, nomServei ?? 'Servei', () => onCanvia(f.copyWith(serveiId: () => null))),
           if (f.collectiu != null)
-            _Xip(Icons.groups_outlined, d.nomCataleg(d.catalegs.collectius, f.collectiu) ?? '',
-                () => e.aplica(f.copyWith(collectiu: () => null))),
+            _Xip(Icons.groups_outlined, nomCollectiu ?? '', () => onCanvia(f.copyWith(collectiu: () => null))),
           if (f.municipiId != null)
-            _Xip(Icons.place_outlined, d.nomMunicipi(f.municipiId) ?? '', () => e.aplica(f.copyWith(municipiId: () => null))),
+            _Xip(Icons.place_outlined, nomMunicipi ?? '', () => onCanvia(f.copyWith(municipiId: () => null))),
           if (f.tipusCentre != null)
-            _Xip(Icons.home_work_outlined, d.nomCataleg(d.catalegs.tipusCentre, f.tipusCentre) ?? '',
-                () => e.aplica(f.copyWith(tipusCentre: () => null))),
-          if (f.actius) TextButton(onPressed: e.neteja, child: const Text('Neteja-ho tot')),
+            _Xip(Icons.home_work_outlined, nomTipus ?? '', () => onCanvia(f.copyWith(tipusCentre: () => null))),
+          if (f.actius) TextButton(onPressed: onNeteja, child: const Text('Neteja-ho tot')),
         ],
       ),
     );
