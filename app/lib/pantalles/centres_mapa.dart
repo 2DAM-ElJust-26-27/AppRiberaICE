@@ -378,7 +378,10 @@ class _Mapa extends StatelessWidget {
                 if (seleccionat!.textPrecisio != null) seleccionat!.textPrecisio!,
               ].join('\n')),
               isThreeLine: true,
-              trailing: FilledButton.tonal(onPressed: () => obriCentre(context, seleccionat!.id), child: const Text('Fitxa')),
+              trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                FilledButton.tonal(onPressed: () => obriCentre(context, seleccionat!.id), child: const Text('Fitxa')),
+                IconButton(tooltip: 'Tanca', icon: const Icon(Icons.close), onPressed: onTocaMapa),
+              ]),
             ),
           ),
         ),
