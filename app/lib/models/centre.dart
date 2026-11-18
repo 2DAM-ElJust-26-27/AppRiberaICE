@@ -2,7 +2,6 @@ part of 'models.dart';
 
 class CentreResum {
   final int id;
-  final String? codi;
   final String nom;
   final Ref? tipusCentre;
   final Ref? municipi;
@@ -14,7 +13,6 @@ class CentreResum {
 
   const CentreResum({
     required this.id,
-    this.codi,
     required this.nom,
     this.tipusCentre,
     this.municipi,
@@ -49,7 +47,6 @@ class CentreResum {
 
   factory CentreResum.fromJson(Json j) => CentreResum(
         id: (j['id'] as num).toInt(),
-        codi: j['codi'] as String?,
         nom: j['nom'] as String,
         tipusCentre: _ref(j['tipus_centre']),
         municipi: _ref(j['municipi']),

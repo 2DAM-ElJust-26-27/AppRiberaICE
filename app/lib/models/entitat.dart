@@ -2,17 +2,15 @@ part of 'models.dart';
 
 class EntitatResum {
   final int id;
-  final String? codi;
   final String nom;
   final Ref? formaJuridica;
   final String? sector;
   final Ref? municipi;
 
-  const EntitatResum({required this.id, this.codi, required this.nom, this.formaJuridica, this.sector, this.municipi});
+  const EntitatResum({required this.id, required this.nom, this.formaJuridica, this.sector, this.municipi});
 
   factory EntitatResum.fromJson(Json j) => EntitatResum(
         id: (j['id'] as num).toInt(),
-        codi: j['codi'] as String?,
         nom: j['nom'] as String,
         formaJuridica: _ref(j['forma_juridica']),
         sector: j['sector'] as String?,

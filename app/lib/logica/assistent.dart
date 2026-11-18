@@ -136,19 +136,9 @@ class AssistentEstat {
   Future<void> _preguntaCollectiu() async {
     final tots = await _cerca(const Filtres());
     if (tots == null) return;
-    final recomptes = <String, int>{};
-    final noms = <String, String>{};
-    for (final s in tots) {
-      for (final c in s.collectius) {
-        if (c.codi == null) continue;
-        recomptes[c.codi!] = (recomptes[c.codi!] ?? 0) + 1;
-        noms[c.codi!] = c.nom;
-      }
-    }
-    final codis = recomptes.keys.toList()..sort((a, b) => noms[a]!.compareTo(noms[b]!));
     pas = Pas.collectiu;
     await _diu('Per a qui busques ajuda?', opcions: [
-      for (final c in codis) Opcio(noms[c]!, valor: c, recompte: recomptes[c]),
+      ..._opcions(tots, (s) => s.collectius, (r) => r.codi),
       Opcio('No ho sé / qualsevol persona', recompte: tots.length),
     ]);
   }
@@ -156,22 +146,11 @@ class AssistentEstat {
   Future<void> _despresDeCollectiu() async {
     final res = await _busca();
     if (res == null) return;
-    if (res.length <= maxSenseMesPreguntes) return _mostraResultats(res);
-
-    final recomptes = <int, int>{};
-    final noms = <int, String>{};
-    for (final s in res) {
-      for (final m in s.municipis) {
-        if (m.id == null) continue;
-        recomptes[m.id!] = (recomptes[m.id!] ?? 0) + 1;
-        noms[m.id!] = m.nom;
-      }
-    }
-    if (recomptes.isEmpty) return _mostraResultats(res);
-    final ids = recomptes.keys.toList()..sort((a, b) => noms[a]!.compareTo(noms[b]!));
+    final opcions = _opcions(res, (s) => s.municipis, (r) => r.id?.toString());
+    if (res.length <= maxSenseMesPreguntes || opcions.isEmpty) return _mostraResultats(res);
     pas = Pas.municipi;
     await _diu('He trobat ${res.length} serveis. En quin municipi el necessites?', opcions: [
-      for (final id in ids) Opcio(noms[id]!, valor: '$id', recompte: recomptes[id]),
+      ...opcions,
       Opcio('Qualsevol lloc', recompte: res.length),
     ]);
   }
@@ -179,24 +158,30 @@ class AssistentEstat {
   Future<void> _despresDeMunicipi() async {
     final res = await _busca();
     if (res == null) return;
-    if (res.length <= maxSenseMesPreguntes) return _mostraResultats(res);
-
-    final recomptes = <String, int>{};
-    final noms = <String, String>{};
-    for (final s in res) {
-      for (final t in s.tipusCentre) {
-        if (t.codi == null) continue;
-        recomptes[t.codi!] = (recomptes[t.codi!] ?? 0) + 1;
-        noms[t.codi!] = t.nom;
-      }
-    }
-    if (recomptes.length < 2) return _mostraResultats(res);
-    final codis = recomptes.keys.toList()..sort();
+    final opcions = _opcions(res, (s) => s.tipusCentre, (r) => r.codi);
+    if (res.length <= maxSenseMesPreguntes || opcions.length < 2) return _mostraResultats(res);
     pas = Pas.tipusCentre;
     await _diu('Encara en tinc ${res.length}. Quin tipus de lloc prefereixes?', opcions: [
-      for (final c in codis) Opcio(noms[c]!, valor: c, recompte: recomptes[c]),
+      ...opcions,
       Opcio('M\'és igual', recompte: res.length),
     ]);
+  }
+
+  /// Una opció per cada valor que apareix en els serveis (col·lectiu, municipi o tipus de centre),
+  /// amb quants serveis el tenen, ordenades per nom. Així només s'ofereixen opcions amb resultats.
+  List<Opcio> _opcions(List<ServeiResum> serveis, List<Ref> Function(ServeiResum) valors, String? Function(Ref) clau) {
+    final recomptes = <String, int>{};
+    final noms = <String, String>{};
+    for (final s in serveis) {
+      for (final r in valors(s)) {
+        final k = clau(r);
+        if (k == null) continue;
+        recomptes[k] = (recomptes[k] ?? 0) + 1;
+        noms[k] = r.nom;
+      }
+    }
+    final claus = recomptes.keys.toList()..sort((a, b) => noms[a]!.compareTo(noms[b]!));
+    return [for (final k in claus) Opcio(noms[k]!, valor: k, recompte: recomptes[k])];
   }
 
   Future<void> _mostraResultats(List<ServeiResum>? res, {bool introduccio = true}) async {

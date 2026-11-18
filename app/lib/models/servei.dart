@@ -2,7 +2,6 @@ part of 'models.dart';
 
 class ServeiResum {
   final int id;
-  final String? codi;
   final String nom;
   final String? descripcio;
   final List<Ref> collectius;
@@ -12,7 +11,6 @@ class ServeiResum {
 
   const ServeiResum({
     required this.id,
-    this.codi,
     required this.nom,
     this.descripcio,
     this.collectius = const [],
@@ -23,7 +21,6 @@ class ServeiResum {
 
   factory ServeiResum.fromJson(Json j) => ServeiResum(
         id: (j['id'] as num).toInt(),
-        codi: j['codi'] as String?,
         nom: j['nom'] as String,
         descripcio: j['descripcio'] as String?,
         collectius: _llista(j['collectius'], Ref.fromJson),
