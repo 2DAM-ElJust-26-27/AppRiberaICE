@@ -72,34 +72,27 @@ flutter create . --platforms=android
 
 ## API (només lectura)
 
-| Mètode i ruta | Descripció |
+| Ruta | Què torna |
 | --- | --- |
-| `GET /api/municipis` | 47 municipis amb la comarca |
-| `GET /api/catalegs` | col·lectius, tipus de centre, formes jurídiques, comarques |
-| `GET /api/serveis?q=&municipi=&collectiu=&tipus_centre=` | cerca de serveis |
-| `GET /api/serveis/{id}` | fitxa: col·lectius, contactes, horaris, prestacions i centres |
-| `GET /api/centres?q=&municipi=&collectiu=&tipus_centre=&servei=&amb_punt=true` | centres (`servei`: on es presta aquest servei; `amb_punt`: només amb coordenades) |
-| `GET /api/centres/{id}` | fitxa: titular, gestor, contactes, horaris, serveis |
-| `GET /api/entitats?q=` · `GET /api/entitats/{id}` | entitats i la seua fitxa |
-
-- `q` cerca per paraules, sense accents ni majúscules (nom, descripció, col·lectiu, entitat, municipi).
-- `municipi` és l'**id** del municipi; en serveis vol dir «prestat en un centre d'aquest municipi»
-  (prestació → centre → municipi), no la seu de l'entitat.
-- `collectiu` i `tipus_centre` són codis (`COL_MAJORS`, `TC04`…).
+| `GET /api/centres` | tots els centres (amb latitud i longitud si en tenen) |
+| `GET /api/centres?servei={id}` | només els centres on es fa aquest servei |
+| `GET /api/centres/{id}` | fitxa: titular, gestor, contactes, horaris i serveis |
+| `GET /api/serveis` | tots els serveis amb els seus col·lectius, municipis i tipus de centre |
+| `GET /api/serveis?municipi={id}` | serveis prestats en un centre d'aquest municipi |
+| `GET /api/serveis/{id}` | fitxa: col·lectius, contactes, horaris, entitats i centres |
+| `GET /api/entitats` · `GET /api/entitats/{id}` | entitats i la seua fitxa |
 
 ## Desenvolupament sense Docker
 
 ```bash
-# API (necessita un PostgreSQL local amb l'esquema creat)
+# API (necessita un PostgreSQL local amb l'esquema de bd/ creat)
 cd api
 mvn package
-IMPORTAR_EN_ARRANCAR=true java -jar target/api.jar
-
-# Només importar
-java -cp target/api.jar ribera.importacio.ImportadorCli ../dades/sprint-1
+java -jar target/api.jar
 ```
 
-Variables d'entorn: `BD_URL`, `BD_USUARI`, `BD_CONTRASENYA`, `PORT`, `IMPORTAR_EN_ARRANCAR`, `DIR_DADES`.
+Si la base de dades està buida, l'API importa `dades/` en arrancar.
+Variables d'entorn: `BD_URL`, `BD_USUARI`, `BD_CONTRASENYA`, `DIR_DADES`, `DIR_COMPLEMENTS`.
 
 ## Proves
 
@@ -113,6 +106,5 @@ cd app
 flutter test
 ```
 
-Les proves d'integració comproven els recomptes de `manifest.json`, totes les consultes de
-`comprovacions.json`, que una segona càrrega no duplica res ni esborra correccions, i que una
-referència trencada s'informa amb el camí exacte i desfà la importació.
+Les proves d'integració comproven els recomptes de `manifest.json`, algunes consultes de
+`comprovacions.json` i les respostes de l'API (llistes, fitxes i errors 404/400).
