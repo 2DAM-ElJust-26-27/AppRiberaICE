@@ -7,7 +7,7 @@ assistent i fitxes. Tot el codi, la interfície i la documentació són en valen
 ## Estructura
 
 ```
-AppRivera/
+AppRibera/
 ├── docker-compose.yml      → contenidors bd (PostgreSQL) i api (Java)
 ├── bd/01-esquema.sql       → taules de la base de dades
 ├── dades/sprint-1/         → fitxers originals del sprint (no es modifiquen)

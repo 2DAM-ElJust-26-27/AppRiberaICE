@@ -1,4 +1,4 @@
-# AppRivera · Connectant la Ribera
+# AppRibera · Connectant la Ribera
 
 Projecte Intermodular 2DAM · Iker Camarena | Carlos Collado | Eric Miñana
 
@@ -43,7 +43,7 @@ Per esborrar la base de dades i començar de zero: `docker compose down -v`.
 
 Tres pestanyes (Centres és la primera en obrir l'app):
 
-- **Serveis**: l'assistent guiat «Carlos Collado» pregunta per a qui és l'ajuda, en quin municipi i quin tipus de
+- **Serveis**: l'assistent guiat «Kevin» pregunta per a qui és l'ajuda, en quin municipi i quin tipus de
   lloc, i proposa els serveis que encaixen (només ofereix opcions amb resultats; també accepta text lliure).
 - **Centres**: mapa amb filtres de serveis (col·lectiu, municipi, tipus de centre, servei concret); mostra els
   centres on es presten. Els que no tenen coordenades apareixen a la llista sota el mapa.

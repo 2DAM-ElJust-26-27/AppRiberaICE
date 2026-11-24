@@ -5,7 +5,7 @@ import '../models.dart';
 import '../widgets.dart';
 import 'fitxa_servei.dart';
 
-/// Pestanya Serveis: l'assistent «Carlos Collado» fa tres preguntes
+/// Pestanya Serveis: l'assistent «Kevin» fa tres preguntes
 /// i va filtrant la llista de serveis.
 class PantallaAssistent extends StatefulWidget {
   const PantallaAssistent({super.key});
@@ -91,7 +91,7 @@ class _PantallaAssistentState extends State<PantallaAssistent> {
           children: [
             const ListTile(
               leading: CircleAvatar(child: Icon(Icons.support_agent)),
-              title: Text('Hola, sóc en Carlos Collado'),
+              title: Text('Hola, sóc en Kevin'),
               subtitle: Text('Et faré unes preguntes per trobar el servei que necessites.'),
             ),
             const SizedBox(height: 16),
