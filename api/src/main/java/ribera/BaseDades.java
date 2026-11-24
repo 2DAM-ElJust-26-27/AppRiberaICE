@@ -61,6 +61,32 @@ public class BaseDades {
         return res;
     }
 
+    // ------------------------------------------------------------------ per a l'importador
+    // Reben la connexió perquè tota la importació va en una sola transacció.
+
+    /** Executa un INSERT ... RETURNING id i torna l'id nou. */
+    public static long insereix(Connection c, String sql, Object... valors) throws SQLException {
+        try (PreparedStatement ps = prepara(c, sql, valors); ResultSet rs = ps.executeQuery()) {
+            rs.next();
+            return rs.getLong(1);
+        }
+    }
+
+    /** Executa un INSERT o un UPDATE que no torna res. */
+    public static void executa(Connection c, String sql, Object... valors) throws SQLException {
+        try (PreparedStatement ps = prepara(c, sql, valors)) {
+            ps.executeUpdate();
+        }
+    }
+
+    private static PreparedStatement prepara(Connection c, String sql, Object... valors) throws SQLException {
+        PreparedStatement ps = c.prepareStatement(sql);
+        for (int i = 0; i < valors.length; i++) {
+            ps.setObject(i + 1, valors[i]);
+        }
+        return ps;
+    }
+
     private static String entorn(String nom, String perDefecte) {
         String valor = System.getenv(nom);
         return (valor == null || valor.isBlank()) ? perDefecte : valor;
