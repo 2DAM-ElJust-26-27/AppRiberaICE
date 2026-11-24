@@ -8,7 +8,7 @@ assistent i fitxes. Tot el codi, la interfície i la documentació són en valen
 
 ```
 AppRibera/
-├── docker-compose.yml      → contenidors bd (PostgreSQL), importador i api (Java)
+├── docker-compose.yml      → contenidors bd (PostgreSQL) i api (Java)
 ├── bd/01-esquema.sql       → taules de la base de dades
 ├── dades/sprint-1/         → fitxers originals del sprint (no es modifiquen)
 ├── dades/complements/      → coordenades buscades a CartoCiudad
@@ -16,7 +16,7 @@ AppRibera/
 │   ├── Aplicacio.java      → arrancada i rutes de l'API
 │   ├── Consultes.java      → els SELECT de cada ruta
 │   ├── BaseDades.java      → connexió i mètodes per fer consultes
-│   ├── Importador.java     → aplicació de consola que carrega els fitxers
+│   ├── Importador.java     → carrega els fitxers a la base de dades
 │   └── LectorCsv.java      → llig CSV amb comes dins de cometes
 ├── app/lib/
 │   ├── main.dart           → pestanyes (barra a baix o vertical a la dreta)
@@ -27,20 +27,29 @@ AppRibera/
 └── docs/                   → aquesta guia i el diagrama ER
 ```
 
+## Com arrancar el projecte
+
+1. Des de l'arrel del repositori, arranca la base de dades i l'API:
+   `docker compose up --build`
+2. L'API queda escoltant en `http://localhost:8080`.
+3. Des de la carpeta `app/`, executa el client en web:
+   `flutter run -d chrome`
+
 ## Com funciona
 
 1. **Base de dades** segons el diagrama ER ([`diagrama-er.png`](diagrama-er.png)):
    `entitat`, `centre` i `servei`, relacionats per `prestacio` (quina entitat fa el servei)
    i `prestacio_centre` (en quin centre es fa). Contactes i horaris van en taules a part.
-2. **Docker** arranca PostgreSQL (que crea les taules la primera vegada), després
-   l'importador i, quan aquest acaba, l'API.
-3. **Importador** (aplicació de consola, té el seu `main`): si la base de dades està buida, llig els fitxers en ordre
+2. **Docker** arranca PostgreSQL (que crea les taules la primera vegada) i l'API.
+3. **Importador**: si la base de dades està buida, l'API llig els fitxers en ordre
    (catàlegs, territori, entitats, centres, serveis, punts) dins d'una transacció.
    Guarda en mapes quin ID ha rebut cada codi (CEN05 → 12) per enllaçar les taules.
 4. **API**: totes les rutes són GET. `Consultes` torna mapes i llistes i Javalin els
    converteix a JSON. Vegeu les rutes al [README](../README.md).
 5. **App**: cada pestanya demana les dades amb `api.dart` i les mostra amb `FutureBuilder`.
    Els canvis de pantalla (filtre, mapa o llista, preguntes de l'assistent) es fan amb `setState`.
+6. **Filtre per servei**: en triar un servei, el client torna a demanar els centres
+   a l'API amb l'identificador del servei; el filtratge no es fa a l'app.
 
 ## Decisions preses
 
@@ -50,4 +59,3 @@ AppRibera/
 - Les coordenades desconegudes queden nul·les: el mapa només mostra centres amb punt
   conegut i la resta ixen a la llista. Mai s'usa `(0,0)`.
 - No s'inventen dades: els titulars i gestors que no consten en els fitxers originals queden buits.
-- El filtre per servei es fa a l'API (el client torna a demanar els centres amb el servei triat), no a l'app.
