@@ -49,4 +49,5 @@ AppRibera/
 - Sense gestors d'estat (Riverpod, Provider): només `StatefulWidget`, `setState` i `FutureBuilder`.
 - Les coordenades desconegudes queden nul·les: el mapa només mostra centres amb punt
   conegut i la resta ixen a la llista. Mai s'usa `(0,0)`.
-- No s'inventen dades: titulars i gestors que no consten queden buits.
+- No s'inventen dades: els titulars i gestors que no consten en els fitxers originals queden buits.
+- El filtre per servei es fa a l'API (el client torna a demanar els centres amb el servei triat), no a l'app.
