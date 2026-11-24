@@ -8,7 +8,7 @@ Aquest repositori conté **només la part d'usuari** (consulta): no hi ha part d
 | Capa | Tecnologia | Carpeta |
 | --- | --- | --- |
 | Base de dades | PostgreSQL 16 | [`bd/`](bd) |
-| API + importador | Java 21 · Javalin 6 · JDBC (Maven) | [`api/`](api) |
+| API + importador de consola | Java 21 · Javalin 6 · JDBC (Maven) | [`api/`](api) |
 | Client | Flutter (estat amb `StatefulWidget` + `setState`, sense gestors d'estat) | [`app/`](app) |
 | Servidor | Docker Compose | [`docker-compose.yml`](docker-compose.yml) |
 | Dades del Sprint 1 | XML · CSV · JSON (originals, sense modificar) | [`dades/sprint-1/`](dades/sprint-1) |
@@ -28,12 +28,14 @@ docker compose up -d --build
 
 - `ribera-bd`: PostgreSQL 16 al port **5432** (BD `ribera`, usuari `ribera`, contrasenya `ribera`).
   La primera vegada executa `bd/01-esquema.sql` i crea les taules.
-- `ribera-api`: API al port **8080**. En arrancar importa `dades/sprint-1` (sense duplicar res si
-  ja estava importat) i mostra als logs els recomptes i les comprovacions:
+- `ribera-importador`: aplicació de consola Java que carrega `dades/` a la base de dades i
+  s'acaba. Si la base de dades ja té dades, no fa res. Per veure què ha importat:
 
 ```bash
-docker compose logs api
+docker compose logs importador
 ```
+
+- `ribera-api`: API al port **8080**. Arranca quan l'importador ha acabat.
 
 Comprova que funciona: <http://localhost:8080/api/serveis>
 
@@ -85,19 +87,23 @@ flutter create . --platforms=android
 ## Desenvolupament sense Docker
 
 ```bash
-# API (necessita un PostgreSQL local amb l'esquema de bd/ creat)
+# Necessita un PostgreSQL local amb l'esquema de bd/ creat
 cd api
 mvn package
+
+# 1. Importador (aplicació de consola): carrega dades/ si la base de dades està buida
+java -cp target/api.jar ribera.Importador ../dades/sprint-1 ../dades/complements
+
+# 2. API
 java -jar target/api.jar
 ```
 
-Si la base de dades està buida, l'API importa `dades/` en arrancar.
-Variables d'entorn: `BD_URL`, `BD_USUARI`, `BD_CONTRASENYA`, `DIR_DADES`, `DIR_COMPLEMENTS`.
+Variables d'entorn: `BD_URL`, `BD_USUARI`, `BD_CONTRASENYA`.
 
 ## Proves
 
 ```bash
-# Java: parser CSV (sempre) + integració importador/API (amb una BD de proves que s'esborra!)
+# Java: lector CSV (sempre) + importador i API (amb una BD de proves que s'esborra!)
 cd api
 BD_PROVES_URL=jdbc:postgresql://localhost:5432/ribera_proves mvn test
 

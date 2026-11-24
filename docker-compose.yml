@@ -1,7 +1,8 @@
 # Connectant la Ribera · servidor
 #   docker compose up -d --build
-# PostgreSQL crea l'esquema la primera vegada (bd/*.sql).
-# Si la base de dades està buida, l'API importa dades/ i escolta al port 8080.
+# 1. bd: PostgreSQL crea les taules la primera vegada (bd/01-esquema.sql).
+# 2. importador: aplicació de consola Java que carrega dades/ i s'acaba.
+# 3. api: arranca quan l'importador ha acabat i escolta al port 8080.
 services:
   bd:
     image: postgres:16-alpine
@@ -16,14 +17,15 @@ services:
       - ./bd:/docker-entrypoint-initdb.d:ro
       - dades-bd:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ribera -d ribera"]
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ribera -d ribera"]
       interval: 5s
       timeout: 3s
       retries: 10
 
-  api:
+  importador:
     build: ./api
-    container_name: ribera-api
+    image: ribera-api
+    container_name: ribera-importador
     depends_on:
       bd:
         condition: service_healthy
@@ -31,10 +33,22 @@ services:
       BD_URL: jdbc:postgresql://bd:5432/ribera
       BD_USUARI: ribera
       BD_CONTRASENYA: ribera
-      DIR_DADES: /dades/sprint-1
-      DIR_COMPLEMENTS: /dades/complements
     volumes:
       - ./dades:/dades:ro
+    # Mateix programa que l'API, però executant la classe Importador
+    entrypoint: ["java", "-Dfile.encoding=UTF-8", "-cp", "api.jar", "ribera.Importador", "/dades/sprint-1", "/dades/complements"]
+
+  api:
+    build: ./api
+    image: ribera-api
+    container_name: ribera-api
+    depends_on:
+      importador:
+        condition: service_completed_successfully
+    environment:
+      BD_URL: jdbc:postgresql://bd:5432/ribera
+      BD_USUARI: ribera
+      BD_CONTRASENYA: ribera
     ports:
       - "8080:8080"
 

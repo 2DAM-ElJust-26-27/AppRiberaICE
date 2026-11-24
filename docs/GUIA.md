@@ -8,7 +8,7 @@ assistent i fitxes. Tot el codi, la interfície i la documentació són en valen
 
 ```
 AppRibera/
-├── docker-compose.yml      → contenidors bd (PostgreSQL) i api (Java)
+├── docker-compose.yml      → contenidors bd (PostgreSQL), importador i api (Java)
 ├── bd/01-esquema.sql       → taules de la base de dades
 ├── dades/sprint-1/         → fitxers originals del sprint (no es modifiquen)
 ├── dades/complements/      → coordenades buscades a CartoCiudad
@@ -16,7 +16,7 @@ AppRibera/
 │   ├── Aplicacio.java      → arrancada i rutes de l'API
 │   ├── Consultes.java      → els SELECT de cada ruta
 │   ├── BaseDades.java      → connexió i mètodes per fer consultes
-│   ├── Importador.java     → carrega els fitxers a la base de dades
+│   ├── Importador.java     → aplicació de consola que carrega els fitxers
 │   └── LectorCsv.java      → llig CSV amb comes dins de cometes
 ├── app/lib/
 │   ├── main.dart           → pestanyes (barra a baix o vertical a la dreta)
@@ -32,8 +32,9 @@ AppRibera/
 1. **Base de dades** segons el diagrama ER ([`diagrama-er.png`](diagrama-er.png)):
    `entitat`, `centre` i `servei`, relacionats per `prestacio` (quina entitat fa el servei)
    i `prestacio_centre` (en quin centre es fa). Contactes i horaris van en taules a part.
-2. **Docker** arranca PostgreSQL (que crea les taules la primera vegada) i l'API.
-3. **Importador**: si la base de dades està buida, l'API llig els fitxers en ordre
+2. **Docker** arranca PostgreSQL (que crea les taules la primera vegada), després
+   l'importador i, quan aquest acaba, l'API.
+3. **Importador** (aplicació de consola, té el seu `main`): si la base de dades està buida, llig els fitxers en ordre
    (catàlegs, territori, entitats, centres, serveis, punts) dins d'una transacció.
    Guarda en mapes quin ID ha rebut cada codi (CEN05 → 12) per enllaçar les taules.
 4. **API**: totes les rutes són GET. `Consultes` torna mapes i llistes i Javalin els

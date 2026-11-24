@@ -19,7 +19,10 @@ import static ribera.BaseDades.executa;
 import static ribera.BaseDades.insereix;
 
 /**
- * Carrega els fitxers del Sprint 1 a la base de dades.
+ * Aplicació de consola que carrega els fitxers del Sprint 1 a la base de dades.
+ *
+ *   java -cp api.jar ribera.Importador ../dades/sprint-1 ../dades/complements
+ *
  * Tot va en una transacció: si falla alguna cosa, no es guarda res.
  *
  * Els fitxers porten codis (MUN47, ENT03, CEN05…). La base de dades dona
@@ -39,6 +42,24 @@ public class Importador {
     private final Map<String, Long> entitats = new HashMap<>();
     private final Map<String, Long> centres = new HashMap<>();
     private long paquetId;
+
+    public static void main(String[] args) throws Exception {
+        Path dades = Path.of(args.length > 0 ? args[0] : "../dades/sprint-1");
+        Path complements = Path.of(args.length > 1 ? args[1] : "../dades/complements");
+
+        // Si ja hi ha dades no fem res: així no es dupliquen
+        if (!BaseDades.textos("SELECT count(*) FROM centre").get(0).equals("0")) {
+            System.out.println("La base de dades ja té dades: no s'importa res.");
+            return;
+        }
+        try (Connection c = BaseDades.connecta()) {
+            new Importador(c, dades, complements).importa();
+        }
+        System.out.println("Importació acabada: "
+                + BaseDades.textos("SELECT count(*) FROM entitat").get(0) + " entitats, "
+                + BaseDades.textos("SELECT count(*) FROM centre").get(0) + " centres, "
+                + BaseDades.textos("SELECT count(*) FROM servei").get(0) + " serveis.");
+    }
 
     public Importador(Connection c, Path dades, Path complements) {
         this.c = c;

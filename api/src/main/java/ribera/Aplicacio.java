@@ -3,12 +3,11 @@ package ribera;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 
-import java.nio.file.Path;
 import java.sql.Connection;
 import java.util.Map;
 
 /**
- * Punt d'entrada de l'API. Totes les rutes són GET: només es consulta.
+ * Punt d'entrada de l'API (les dades les carrega abans l'Importador). Totes les rutes són GET: només es consulta.
  *
  *   GET /api/centres            GET /api/centres?servei={id}     GET /api/centres/{id}
  *   GET /api/serveis            GET /api/serveis?municipi={id}   GET /api/serveis/{id}
@@ -18,19 +17,6 @@ public class Aplicacio {
 
     public static void main(String[] args) throws Exception {
         esperaBaseDades();
-
-        // La primera vegada la base de dades està buida: importem els fitxers
-        if (BaseDades.textos("SELECT count(*) FROM centre").get(0).equals("0")) {
-            Path dades = Path.of(entorn("DIR_DADES", "../dades/sprint-1"));
-            Path complements = Path.of(entorn("DIR_COMPLEMENTS", "../dades/complements"));
-            try (Connection c = BaseDades.connecta()) {
-                new Importador(c, dades, complements).importa();
-            }
-            System.out.println("Dades importades: "
-                    + BaseDades.textos("SELECT count(*) FROM centre").get(0) + " centres, "
-                    + BaseDades.textos("SELECT count(*) FROM servei").get(0) + " serveis.");
-        }
-
         crea().start(8080);
     }
 
@@ -86,10 +72,5 @@ public class Aplicacio {
             }
         }
         throw new IllegalStateException("No s'ha pogut connectar a la base de dades");
-    }
-
-    private static String entorn(String nom, String perDefecte) {
-        String valor = System.getenv(nom);
-        return (valor == null || valor.isBlank()) ? perDefecte : valor;
     }
 }
