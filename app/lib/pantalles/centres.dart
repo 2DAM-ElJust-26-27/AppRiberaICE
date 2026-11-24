@@ -46,7 +46,11 @@ class _PantallaCentresState extends State<PantallaCentres> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ambDades(_serveis, _filtre),
+            // Si l'API falla, el missatge d'error ja ix al mapa: ací no mostrem res
+            child: FutureBuilder(
+              future: _serveis,
+              builder: (context, snapshot) => snapshot.hasData ? _filtre(snapshot.data!) : const SizedBox.shrink(),
+            ),
           ),
           Expanded(
             child: ambDades(_centres, (centres) => _veureLlista ? _llista(centres) : _mapa(centres)),
