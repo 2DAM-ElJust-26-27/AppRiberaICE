@@ -41,7 +41,7 @@ class _IniciState extends State<Inici> {
       children: const [PantallaCentres(), PantallaAssistent(), PantallaEntitats()],
     );
 
-    // Pantalla gran (ordinador): barra vertical a la dreta
+    // Pantalla gran (ordinador): barra vertical a la dreta responsive que cambia a barra inferior en mòbil. La barra vertical té els botons centrats en vertical.
     if (MediaQuery.of(context).size.width >= 840) {
       return Scaffold(
         body: Row(
