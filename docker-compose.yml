@@ -1,7 +1,7 @@
 # Connectant la Ribera · servidor
 #   docker compose up -d --build
 # PostgreSQL crea l'esquema la primera vegada (bd/*.sql).
-# L'API importa dades/sprint-1 en arrancar (càrrega idempotent) i escolta al port 8080.
+# Si la base de dades està buida, l'API importa dades/ i escolta al port 8080.
 services:
   bd:
     image: postgres:16-alpine
@@ -31,10 +31,8 @@ services:
       BD_URL: jdbc:postgresql://bd:5432/ribera
       BD_USUARI: ribera
       BD_CONTRASENYA: ribera
-      IMPORTAR_EN_ARRANCAR: "true"
       DIR_DADES: /dades/sprint-1
       DIR_COMPLEMENTS: /dades/complements
-      PORT: "8080"
     volumes:
       - ./dades:/dades:ro
     ports:
