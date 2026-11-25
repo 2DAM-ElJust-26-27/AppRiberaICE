@@ -8,6 +8,8 @@ void obri(BuildContext context, Widget pantalla) {
 
 /// Espera unes dades de l'API: mentre arriben mostra un cercle,
 /// i si falla mostra un missatge d'error.
+
+/// T -> recibe Servei, Entitat, Center...
 Widget ambDades<T>(Future<T> futur, Widget Function(T dades) construeix) {
   return FutureBuilder<T>(
     future: futur,
@@ -20,7 +22,7 @@ Widget ambDades<T>(Future<T> futur, Widget Function(T dades) construeix) {
           ),
         );
       }
-      if (!snapshot.hasData) {
+      if (!snapshot.hasData) {  /// contiene información sobre el estado de la petición a la API
         return const Center(child: CircularProgressIndicator());
       }
       return construeix(snapshot.data as T);
